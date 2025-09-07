@@ -1,0 +1,52 @@
+13:55:06	 From  Truong Phat : em chờ cài lại VMware16
+13:56:00	 From  Võ Đặng Duy Tiến : em thấy cái này hay quá anh :) giờ em biết mới thấy tiện quá
+14:07:08	 From  Khoa : bay h co ai con lap trinh tren window ce ko nhi
+14:43:03	 From  Khoa : cac directory nay phai nho het ha b? vd /proc/ co' meminfo, ......
+14:49:55	 From  Khoa : vdcode no warning implicit declaration of function 'read'; did you mean 'fread'? [-Wimplicit-function-declaration]gcc la sao nhi? open thi binh thuong chi co read vs close la bi. Compile van ok. m da include fcntl.h roi
+14:50:09	 From  Võ Đặng Duy Tiến : thêm cái thư viện nữa anh
+14:50:12	 From  Thien Phan : #include <unistd.h>
+14:50:31	 From  Võ Đặng Duy Tiến : mà hồi em đi học em hay dùng hàm fopen để đọc hơn là open
+14:50:36	 From  Võ Đặng Duy Tiến : không biết có khác gì nhiều không nhỉ ?
+14:51:11	 From  Võ Đặng Duy Tiến : ồ oke anh
+14:55:42	 From  Truong Phat : em nãy giờ setup visual code với máy ảo. máy tính em chậm quá chưa viết được gì
+15:01:12	 From  Võ Đặng Duy Tiến : while(read(fd, &c,1) == 1 && c != '\n')    {        printf("%c",c);    }
+15:01:23	 From  Võ Đặng Duy Tiến : em nghĩ đọc dòng đầu tiên là tiện hơn chứ nhỉ
+15:06:10	 From  Võ Đặng Duy Tiến : dạ có khi lỗi gì khác không anh, máy em laptop cũng 8gb ram chạy bth á anh
+15:06:56	 From  Truong Phat : máy em i3 ram 8G
+15:07:09	 From  DAT NGUYEN : Máy mình 8G ram chạy bth
+15:09:09	 From  Khoa : 3 ;)
+15:09:29	 From  Võ Đặng Duy Tiến : -1 chứ
+15:09:30	 From  Võ Đặng Duy Tiến : nhỉ
+15:09:36	 From  Võ Đặng Duy Tiến : tại qua dòng đó nó mới bằng 3
+15:11:52	 From  Phạm Thanh Tâm : em nghĩ vẫn là 3
+15:11:55	 From  Ái Phạm : vẫn là 3
+15:12:00	 From  Khoa : 4
+15:12:03	 From  thinh ngo : 3,3
+15:12:07	 From  Nguyen Viet Son : 3
+15:12:08	 From  Truong Phat : 4
+15:12:09	 From  Võ Đặng Duy Tiến : dạ em nghĩ là 3
+15:12:11	 From  Đinh Văn Thắng : 9
+15:12:55	 From  thinh ngo : 3,4
+15:13:27	 From  Phạm Thanh Tâm : tại có file hệ thống đang mở
+15:13:32	 From  Phạm Thanh Tâm : đúng hông a
+15:13:39	 From  thinh ngo : co uu tien gi do
+15:13:40	 From  Phạm Thanh Tâm : stdin
+15:13:44	 From  Truong Phat : 1 là stdin
+15:14:16	 From  Khoa : 0
+15:14:17	 From  Truong Phat : 2
+15:14:25	 From  thinh ngo : 2
+15:27:21	 From  Truong Phat : em nghĩ là không
+15:28:24	 From  Truong Phat : em chạy code coi debug thì mới hiểu.
+15:35:45	 From  thinh ngo : Cache luon luon duoc enable ha anh Phu
+15:36:50	 From  DAT NGUYEN : Anh share màn hình đi ạ.
+15:38:59	 From  thinh ngo : minh co cach nao de trigger dong bo Cache va ngoai vi ko anh?
+Vi du khi minh dua du lieu toi roi, nhung chua du lieu chua ra duoc ngoai vi.
+15:41:59	 From  Khoa : ua vay trong linux ko co fflush ma la fsync?
+15:42:58	 From  229206_Nguyễn Trắc Toàn : theo e fflush cung la ham thu vien goi toi ham co ban cua Linux thoi
+15:43:35	 From  Phạm Thanh Tâm : em nhớ hàm __fpurge() thay cho fflush
+15:45:13	 From  DAT NGUYEN : Không có virus
+15:45:16	 From  Khoa : sudo dc
+15:45:16	 From  Truong Phat : em chưa sài key logger chưa biết
+15:45:32	 From  Phạm Thanh Tâm : em cũng chưa xài
+15:51:58	 From  Phạm Thanh Tâm : __fpurge()
+15:54:05	 From  Phạm Thanh Tâm : bye anh
