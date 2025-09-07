@@ -1,0 +1,8 @@
+10:48:29	 From  khoa : ua add text vo debug la cung arg j v ban?
+10:50:29	 From  khoa : ah -g m thay r :D
+10:52:43	 From  Thien Phan : https://mathhoang.blogspot.com/2010/12/huong-dan-debug-chuong-trinh-voi-gdb.html
+10:54:38	 From  Võ Đặng Duy Tiến : dạ em chạy bình thường ổn nha anh
+10:57:32	 From  Truong Phat : bên em stdio.h no such file or directory
+10:59:43	 From  Truong Phat : chưa cài anh ơi
+11:12:08	 From  khoa : khi cai vscode de debug on board ma` no' bi memory limit thi co cach' nao` khac ko a?
+11:23:44	 From  Võ Đặng Duy Tiến : chào anh
