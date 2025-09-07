@@ -93,6 +93,7 @@ debug
 		sudo ufw allow ssh
 		ssh username@IP_address
 		ssh username@domain
+		exit
 		---
 		sudo systemctl start ssh
 		sudo systemctl restart ssh
@@ -103,3 +104,8 @@ debug
 	cài extension trên VSCode
 		C/C++
 		Remote Development
+	kết nối VSCode với SSH
+		.Ctrl+P
+		>ssh username@IP_Address
+		.enter password
+		.File > Save Workspace As...
