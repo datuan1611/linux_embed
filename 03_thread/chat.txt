@@ -1,0 +1,60 @@
+08:56:39	 From  Truong Phat : ampere quận 7
+08:57:01	 From  Phu Luu An : sea group
+08:57:12	 From  Phu Luu An : axon
+08:58:37	 From  Truong Phat : cuối tuần em nhiễm covid
+08:58:59	 From  Truong Phat : viêm họng , sốt . đỏ mắt
+08:59:38	 From  Truong Phat : em chưa
+09:00:34	 From  Võ Đặng Duy Tiến : ampere ngon lắm anh
+09:01:47	 From  Võ Đặng Duy Tiến : axon trong web intern của trường em có anh, nếu nghe review ổn thì chắc năm sau em xin thử.
+09:04:08	 From  Võ Đặng Duy Tiến : em đang lo làm mấy paper để ráng có cv sau xin master nước ngoài anh :<<
+09:09:46	 From  Võ Đặng Duy Tiến : addi %s0, %0, -1
+09:16:14	 From  Truong Phat : dòng for tốn thời gian
+09:16:17	 From  229206_Nguyễn Trắc Toàn : scanf
+09:16:30	 From  Quang Huy Nguyen : đoạn loop
+09:16:32	 From  Zoom user : Scanf
+09:16:44	 From  Tiến Phan : 1 chu kỳ máy cpu nó xử lý hang triệu phép toán
+09:23:37	 From  Ái Phạm : rtos
+09:23:38	 From  Thien Phan : rtos
+09:27:40	 From  Truong Phat : em cũng lag với máy ảo.
+09:39:27	 From  Zoom user : Vậy m có phải join cho tất cả các thread ko b? Vd như thread nó kết thúc rồi.
+09:46:36	 From  DAT NGUYEN : them lenh -pthread
+09:50:14	 From  DAT NGUYEN : Anh Phú ơi mở file đề bài e với, nãy e chưa kịp đọc hết.
+09:55:54	 From  Võ Đặng Duy Tiến : em tưởng mình cần thêm cái micro sd card nữa anh ?
+09:56:37	 From  NVChuyên : Có cần đầu lọc thẻ nhớ k anh?
+10:00:49	 From  DAT NGUYEN : e chưa
+10:03:11	 From  Truong Phat : coutThread_2.c:(.text+0x76): undefined reference to `pthread'
+10:03:17	 From  Truong Phat : em bị lỗi này
+10:03:23	 From  Võ Đặng Duy Tiến : sao máy em chạy nãy giờ chưa xong luôn á anh =)))
+10:03:44	 From  Phu Luu An : Phần cứng cho buổi sau: 1 board beage bone black, 1 cp210x (usb2serial để cắm vào máy tính), 1 cáp ethernet để cắm vào laptop
+10:03:53	 From  Phu Luu An : gcc -o hello -pthread hello.c
+10:04:00	 From  Truong Phat : em để flag rồi
+10:06:22	 From  Thien Phan : multi thread châm hơn anh
+10:06:49	 From  Thien Phan : em nghĩ nó tốn thời gian switch giữa các thread
+10:09:01	 From  Thien Phan : de em share
+10:20:44	 From  Phu Luu An : misra C
+10:20:46	 From  Thinh Ngo : misra C
+10:24:06	 From  Truong Phat : 150 000
+10:24:32	 From  Thien Phan : khogn xac dinh
+10:24:33	 From  Truong Phat : first_thread ở trên nữa
+10:24:38	 From  Nguyễn Công Duy : >100000
+10:24:44	 From  229206_Nguyễn Trắc Toàn : 50000 < count <100000
+10:24:59	 From  Phạm Thanh Tâm : <100000
+10:25:02	 From  Thinh Ngo : 49999
+10:25:10	 From  Truong Phat : 49998
+10:30:15	 From  Võ Đặng Duy Tiến : anh compile lại rồi chạy thử nó có gặp lỗi ko anh
+10:31:05	 From  DAT NGUYEN : Em tang 20 tỉ nó chạy đúng a ạ
+10:35:52	 From  Võ Đặng Duy Tiến : em nghĩ theo lý thuyết thì chắc hết
+10:35:57	 From  Thien Phan : khong
+10:35:59	 From  229206_Nguyễn Trắc Toàn : khong
+10:36:03	 From  Phạm Thanh Tâm : em nghĩ khong
+10:36:06	 From  Phạm Thanh Tâm : không
+10:48:32	 From  Ái Phạm : chậm hơn
+11:00:44	 From  Truong Phat : em nghỉ là không
+11:01:03	 From  Zoom user : Có nếu nó gọi chính nó
+11:01:03	 From  Hậu Trương : lỡ có thằng ko nó block rồi nó ko unblock
+11:02:22	 From  229206_Nguyễn Trắc Toàn : khong sleep
+11:02:47	 From  Ái Phạm : độ ưu tiên
+11:08:03	 From  229206_Nguyễn Trắc Toàn : extern ra thi duoc
+11:08:04	 From  Truong Phat : được
+11:16:58	 From  Zoom user : Ủa vậy 2 process cùng truy cập 1 hw thì làm sao ta?
+11:19:31	 From  229206_Nguyễn Trắc Toàn : em hoi chut
