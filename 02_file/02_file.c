@@ -184,7 +184,7 @@ Example:
 .hàm sync() sẽ đồng bộ data từ cached ra file, tuy nhiên sẽ sync tất cả các file trong hệ thống
  có thể dùng O_DIRECT để tự động sync từ cached ra file, tuy nhiên tốc độ đọc/ghi file sẽ chậm
  
- #Exercise
+ #Homework
  1. Viết app key-logger
 	.tìm file đại diện driver của bàn phím trong thư mục /dev
 	 keyword: how to read keyboard buffer in linux
@@ -192,4 +192,4 @@ Example:
 	.detect khi user ấn phím "P" thì hiển thị ra màn hình
 		#include <linux/input.h>
 		struct input_event{};
-		/dev/input/event4
+		/dev/input/event2
