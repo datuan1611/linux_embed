@@ -61,7 +61,7 @@ int pthread_join(pthread_t thread, void **retval)
 	nguyên nhân là do khi thread_1 đẩy dữ liệu vào queue, biến count trong hàm empty() đã tăng nhưng vẫn ở cache, chưa lưu vào RAM
 	do đó khi thread_2 check empty() thì biến count vẫn là 0, và hiểu là ở queue vẫn chưa có data
 
-.khắc phục xung đột data bằng mutex hoặc semaphore
+.khắc phục xung đột data bằng mutex hoặc semaphore:
 
 A.MUTEX
  chỉ có 1 khoá duy nhất
@@ -79,11 +79,13 @@ A.MUTEX
 B.SEMAPHORE
  có 1 hoặc nhiều khoá
  trong 1 thời điểm có thể có 1 hoặc nhiều thread có được khoá
+	#include <semaphore.h>
 	sem_t sem_name
 	int sem_init(sem_t *sem, int pshared, unsigned int value)
 	int sem_wait(sem_t *sem)
 	int sem_post(sem_t *sem)
 	int sem_destroy(sem_t *sem)
+ named semaphore dùng để lock giữa các process
 
 .Dead Lock:
  là trạng thái có 2 hoặc nhiều thread đi vào vòng lặp vô tận để chờ đợi tài nguyên của nhau
@@ -97,3 +99,5 @@ B.SEMAPHORE
 	thread_1 có hàm chiếm lock -> nhưng ko có CPU để xử lý xong task
 	thread_2 có hàm ngắt chiếm CPU -> nhưng ko có lock để xử lý xong task
  với linux kernel có chức năng lockdep, có thể debug và phát hiện dead_lock nếu nó xảy ra
+
+.trong linux, mỗi thread/process đều được quản lý bởi 1 struct task_struct
