@@ -62,11 +62,25 @@ int pthread_join(pthread_t thread, void **retval)
 	do đó khi thread_2 check empty() thì biến count vẫn là 0, và hiểu là ở queue vẫn chưa có data
 
 .khắc phục xung đột data bằng mutex hoặc semaphore
-.MUTEX:
- chỉ có 1 khoá duy nhất, trong 1 thời điểm chỉ có 1 thread có được khoá, các thread khác phải đợi
- coding:
+
+A.MUTEX
+ chỉ có 1 khoá duy nhất
+ trong 1 thời điểm chỉ có 1 thread có được khoá, các thread khác phải đợi
 	int pthread_mutex_init(pthread_mutex_t *restrict mutex, const pthread_mutexattr_t *restrict attr)
 	int pthread_mutex_destroy(pthread_mutex_t *mutex)
 	int pthread_mutex_lock(pthread_mutex_t *mutex)
 	int pthread_mutex_unlock(pthread_mutex_t *mutex)
 	int pthread_mutex_trylock(pthread_mutex_t *mutex)
+ trong trường hợp khoá bị chiếm bởi thread khác rồi, làm cho sleep thread đang check
+ thực tế, thread dùng pthread_mutex_trylock() để check khoá có đang bị chiếm bởi thread khác không?
+ nếu khoá đang chưa bị lock bởi thread khác -> thực hiện lock mutex và handle với data
+ nếu khoá đang bị lock bởi thread khác -> ko sleep thread, mà return để thực hiện việc khác, sau đó sẽ quay lại check lại khoá sau
+
+B.SEMAPHORE
+ có 1 hoặc nhiều khoá
+ trong 1 thời điểm có thể có 1 hoặc nhiều thread có được khoá
+	sem_t sem_name
+	int sem_init(sem_t *sem, int pshared, unsigned int value)
+	int sem_wait(sem_t *sem)
+	int sem_post(sem_t *sem)
+	int sem_destroy(sem_t *sem)
