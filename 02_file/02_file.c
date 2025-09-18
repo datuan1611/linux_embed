@@ -70,7 +70,7 @@ open()
 		OK	:con trỏ file fd, giá trị int >= 3
 		NG	:giá trị < 0
 fflush()
-    đẩy dữ liệu vào bộ nhớ đệm (thường là RAM), khu vực nhớ: DMA, cached phụ
+    đẩy dữ liệu vào bộ nhớ đệm (thường là RAM), khu vực nhớ: DMA, cache phụ
 	do device ngoại vi(implement) không xử lý nhanh bằng CPU(request)
 sync()
     sync data ở RAM và thiết bị ngoại vi
@@ -181,8 +181,8 @@ Example:
 		struct file __rcu * fd_array[NR_OPEN_DEFAULT];	//bảng file table, chứa index các file đang mở
 		struct file	{};				//chứa thông tin file đang mở
 .các hàm fopen(), fclose() dễ coding hơn, tuy nhiên ít tham số và ít control phần cứng hơn so với hàm gốc open(), close()
-.hàm sync() sẽ đồng bộ data từ cached ra file, tuy nhiên sẽ sync tất cả các file trong hệ thống
- có thể dùng O_DIRECT để tự động sync từ cached ra file, tuy nhiên tốc độ đọc/ghi file sẽ chậm
+.hàm sync() sẽ đồng bộ data từ cache ra file, tuy nhiên sẽ sync tất cả các file trong hệ thống
+ có thể dùng O_DIRECT để tự động sync từ cache ra file, tuy nhiên tốc độ đọc/ghi file sẽ chậm
  
  #Homework
  1. Viết app key-logger
