@@ -84,3 +84,16 @@ B.SEMAPHORE
 	int sem_wait(sem_t *sem)
 	int sem_post(sem_t *sem)
 	int sem_destroy(sem_t *sem)
+
+.Dead Lock:
+ là trạng thái có 2 hoặc nhiều thread đi vào vòng lặp vô tận để chờ đợi tài nguyên của nhau
+ nguyên nhân: 2 hoặc nhiều thread sử dụng chung nhiều lock để hoàn thành công việc
+ giải pháp: giảm số lượng lock trong source code
+
+ 1 trường hợp khác về dead_lock, là khi có ngắt dù chỉ dùng 1 lock
+ khi dùng 1 lock, thread lock sẽ chiếm CPU để xử lý, còn thread khác sẽ sleep và nhả CPU
+ nhưng với hàm ngắt thì ko sleep, độ ưu tiên cao, chiếm dụng CPU luôn, ko xong sẽ ko để hàm khác chạy
+ cho nên khi rơi vào khả năng sau có thể gây ra dead_lock:
+	thread_1 có hàm chiếm lock -> nhưng ko có CPU để xử lý xong task
+	thread_2 có hàm ngắt chiếm CPU -> nhưng ko có lock để xử lý xong task
+ với linux kernel có chức năng lockdep, có thể debug và phát hiện dead_lock nếu nó xảy ra
