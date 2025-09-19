@@ -100,4 +100,13 @@ B.SEMAPHORE
 	thread_2 có hàm ngắt chiếm CPU -> nhưng ko có lock để xử lý xong task
  với linux kernel có chức năng lockdep, có thể debug và phát hiện dead_lock nếu nó xảy ra
 
+.lập trình multithread mutex/semaphore là ở tầng user-interface
+ ở tầng kernel cũng có xử lý multithread tương tự mutex/semaphore
+
+.hàm ngắt interupt
+ các hàm ngắt hardware-interupt và software-interupt là ở tầng kernel
+ độ ưu tiên hardware-interupt > software-interupt == thread ở kernel > thread ở user-interface
+ signal-handler là xử lý tương tự hàm ngắt interupt ở kernel, độ ưu tiên cao
+ (cần tìm hiểu thêm xử lý signal của kernel, ví dụ E301/E302...)
+
 .trong linux, mỗi thread/process đều được quản lý bởi 1 struct task_struct
