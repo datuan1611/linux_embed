@@ -1,0 +1,40 @@
+13:36:26	 From  Thien Phan : 2 thread access cùng 1 biến thì mình có thể dung mutex. Còn 1 thread và 1 interrupt thì mình giải quyeets như thế nào anh
+13:40:18	 From  NVChuyên : Anh ơi, Ngắt thì có ngắt cứng và ngắt mềm. Không biết Ngắt mềm với thread thì cái nào ưu tiên hơn anh nhỉ?
+13:41:34	 From  Thinh Ngo : Thanks anh Phu'
+13:55:38	 From  Võ Đặng Duy Tiến : có anh ơi
+13:57:08	 From  229206_Nguyễn Trắc Toàn : char **argv a oi
+13:57:23	 From  Võ Đặng Duy Tiến : ừa đúng rùi anh
+14:00:56	 From  Truong Phat : có em nè anh
+14:01:04	 From  Truong Phat : nhưng qui trình hay tool nó khác
+14:07:14	 From  Võ Đặng Duy Tiến : vậy mấy tool debugging linux tốt là gì anh, mình dùng gdb clang hay cmake ý
+14:26:58	 From  Truong Phat : ghi log lại
+14:27:47	 From  DAT NGUYEN : cái này watchdog làm hả a?
+14:29:21	 From  229206_Nguyễn Trắc Toàn : tat log =))
+14:38:18	 From  Võ Đặng Duy Tiến : là mình dùng hàm từ thư viện dirent.h đúng không anh ?
+14:39:34	 From  Phu Luu An : https://stackoverflow.com/questions/10446526/get-last-modified-time-of-file-in-linux
+14:48:31	 From  Khoa : in permission vs last change thoi phai ko a?
+14:58:38	 From  229206_Nguyễn Trắc Toàn : ca 2
+14:58:42	 From  Tiến Phan : cả 2
+14:59:08	 From  229206_Nguyễn Trắc Toàn : 2 process thuc hien cung doan code
+14:59:44	 From  Truong Phat : anh chưa save file
+15:02:13	 From  Quang Huy Nguyen : do chung environment
+15:02:15	 From  229206_Nguyễn Trắc Toàn : ke thua environment variable tu process cha
+15:09:36	 From  DAT NGUYEN : I am child Xin_chao
+15:10:07	 From  Truong Phat : I am child Xin_chao I am parrent
+15:10:15	 From  229206_Nguyễn Trắc Toàn : khon in parent
+15:11:34	 From  Thien Phan : ghi đè process cha
+15:11:58	 From  Võ Đặng Duy Tiến : sao nó lại là argv[0] vậy anh, em tưởng nó là path environment chứ nhỉ
+15:16:34	 From  DAT NGUYEN : Tester khoai quá
+15:20:23	 From  229206_Nguyễn Trắc Toàn : de parent process thu thong tin
+15:20:50	 From  Võ Đặng Duy Tiến : được anh
+15:26:03	 From  229206_Nguyễn Trắc Toàn : co
+15:26:04	 From  229206_Nguyễn Trắc Toàn : co
+15:26:05	 From  Võ Đặng Duy Tiến : co
+15:26:07	 From  DAT NGUYEN : có
+15:28:42	 From  Ái Phạm : wait ngay sau if k đc hả a
+15:43:17	 From  229206_Nguyễn Trắc Toàn : thu di a
+15:43:20	 From  Võ Đặng Duy Tiến : dạ được anh
+15:43:37	 From  Phạm Thanh Tâm : em thấy có các công cụ như update.rc và chkconfig để khởi chạy cùng hệ điều hành  ! so nó với systemd thì như nào a
+15:51:02	 From  Phạm Thanh Tâm : bye anh
+15:51:07	 From  Truong Phat : bye anh
+15:51:07	 From  DAT NGUYEN : bye anh.
