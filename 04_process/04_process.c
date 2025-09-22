@@ -97,3 +97,21 @@
 .exec sẽ thay không gian bộ nhớ của process hiện tại bằng new process image
  sẽ ghi đè process mới vào process cũ, ko sinh thêm 1 process nữa
  những dòng code tiếp theo của process cũ đã bị ghi đè, ko thể chạy nữa
+
+#8. Daemon process
+.là process ngắt kết nối với stdio, login session
+.khi daemon process được tạo ra, nó sẽ tạo 1 session login riêng
+ khi process này kết thúc, thì tất cả process chạy với session login này cũng kết thúc
+
+.trong linux có "systemd", là process init, giúp quản lý hệ thống và dịch vụ trong linux
+ có file text config để viết các rule > để trong folder hệ thống > khi khởi động hệ thống, systemd sẽ load file config và khởi tạo các process daemon
+ cung cấp các cmd: systemctl, journald, logind, networkd, timedated, udev
+.để viết file config cho systemd
+ 1. cd /etc/systemd/system
+ 2. tạo 1 file có tên [servicename.service] và chèn các mô tả các trường [Unit/Service/Install]
+ url: https://shubhamdipt.com/blog/how-to-create-a-systemd-service-in-linux
+ keyword: how to create a systemd service in linux
+.virus sử dụng cơ chế daemon để load cùng hệ thống
+ chèn đoạn mã vào 1 chương trình bất kỳ/1 daemon/1 thư viện
+ khi 1 chương trình khác có quyền root thực hiện load thư viện (đã bị chèn mã virus) thì mã virus sẽ chạy
+ và virus có quyền root nên có thể tạo process daemon mới
