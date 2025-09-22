@@ -68,3 +68,32 @@
 .các cmd line dùng PID để thao tác với process
 	ps -aux			//hiển thị danh sách các process đang chạy
 	lsof -p 3865	//hiển thị danh sách các file được mở bởi process PID 3865
+
+#6. fork function
+	pid_t fork(void)
+.tạo ra 1 process mới bằng cách duplicate process hiện tại (process parent)
+.tạo ra 1 bản sao cho bộ nhớ hiện tại của process
+ PID thật sẽ được trả cho process con
+ PID 0 sẽ được trả về cho process cha
+ process con có thể chạy và hoàn thành công việc trước process cha
+.sinh sản vô tính, các process được sinh ra đều giống nhau
+ process mới có file table giống process cũ, nên sẽ gọi các function giống nhau
+
+.zombie process đã chết rồi, không thể kill được, ko chiếm CPU, vẫn chiếm ít memory
+ khi process con chết, sẽ gửi 1 signal chứa mã trả về, thông báo "đã chết" tới process cha,
+ nếu process cha không wait để nhận mã trả về, thì process con sẽ chuyển sang status zombie (Z+)
+ khi process cha chết trước process con, thì process con zombie chuyển sang status "mồ côi", tìm process cha init (pid=1)
+ trong init process sẽ có xử lý wait với process con, ko bị zombie process nữa
+ giải pháp: ở process cha phải call hàm wait() để nhận mã trả về của process con
+	#include <sys/wait.h>
+	pid_t wait(int *wstatus)
+ url: https://stackoverflow.com/questions/16944886/how-to-kill-zombie-process
+
+
+#7. exec function
+	int execl(const char *pathname, const char *arg0,...,NULL)
+.khởi tạo process mới từ chương trình nằm tại pathname
+ sau khi gọi hàm exec, toàn bộ source code phía sau của chương trình sẽ  không được thực hiện nữa
+.exec sẽ thay không gian bộ nhớ của process hiện tại bằng new process image
+ sẽ ghi đè process mới vào process cũ, ko sinh thêm 1 process nữa
+ những dòng code tiếp theo của process cũ đã bị ghi đè, ko thể chạy nữa
