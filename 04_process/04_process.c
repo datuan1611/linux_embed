@@ -107,10 +107,32 @@
  có file text config để viết các rule > để trong folder hệ thống > khi khởi động hệ thống, systemd sẽ load file config và khởi tạo các process daemon
  cung cấp các cmd: systemctl, journald, logind, networkd, timedated, udev
 .để viết file config cho systemd
- 1. cd /etc/systemd/system
- 2. tạo 1 file có tên [servicename.service] và chèn các mô tả các trường [Unit/Service/Install]
- url: https://shubhamdipt.com/blog/how-to-create-a-systemd-service-in-linux
  keyword: how to create a systemd service in linux
+ url: https://shubhamdipt.com/blog/how-to-create-a-systemd-service-in-linux
+	gcc -g -o my_ls my_ls.c
+	sudo cp my_ls /usr/local/bin
+	cd /etc/systemd/system
+	touch my_ls.service
+	/*-------------------------
+	[Unit]
+	Description=My LS service
+	After=network.target
+
+	[Service]
+	ExecStart=/usr/local/bin/my_ls
+	WorkingDirectory=/usr/local/bin
+	Restart=on-failure
+	User=jk
+
+	[Install]
+	WantedBy=multi-user.target
+	-------------------------*/
+	sudo systemctl daemon-reload 
+	sudo systemctl enable my_ls.service
+	sudo systemctl start my_ls.service
+	sudo systemctl status my_ls.service
+	sudo journalctl -u my_ls.service -b
+
 .virus sử dụng cơ chế daemon để load cùng hệ thống
  chèn đoạn mã vào 1 chương trình bất kỳ/1 daemon/1 thư viện
  khi 1 chương trình khác có quyền root thực hiện load thư viện (đã bị chèn mã virus) thì mã virus sẽ chạy
