@@ -193,3 +193,22 @@ Example:
 		#include <linux/input.h>
 		struct input_event{};
 		/dev/input/event2
+
+#Bổ Sung:
+.có các loại file sau:\
+	regular file: file thông thường, như text file, executable file
+	directory file: file chứa danh sách các file khác
+	character device file: file đại diện cho các thiết bị không có địa chỉ vùng nhớ
+	block device file: file đại diện cho các thiết bị có địa chỉ vùng nhớ
+	link file: file đại diện cho 1 file khác
+	socket file: file đại diện cho 1 socket
+	pipe file: file đại diện cho 1 pipe
+.khi process sử dụng read()/write() để đọc/ghi file
+	#read()
+	1-kernel xác định page cần đọc
+	2-kernel đọc từ Page Cache
+	3-nếu page có trong Page Cache, thì thông tin sẽ được đọc ra
+	4-nếu page không có trong Page Cache, thì đọc từ vùng nhớ vật lý vào Page Cache, sau đó đọc ra cho userspace
+	#write()
+	1-kernel ghi nội dung page vào Page Cache
+	2-Page Cache sẽ được ghi vào vùng nhớ vật lý định kỳ, hoặc khi dùng các lệnh sync(), fsync()

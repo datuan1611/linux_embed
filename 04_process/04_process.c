@@ -27,16 +27,16 @@
 	------------------------
 	....						//cmd line arguments and environment variables
 	------------------------
-	stack
+	stack						//read-write, static allocation (compile-time), resize by allocating/freeing stack frames
 	  |
 	  v
-	heap
+	heap						//read-write, automic allocation (runtime), resize by alloc(), malloc(), calloc()
 	------------------------
-	uninitialized data (bss)	//initialized to zero by exec
+	uninitialized data (bss)	//read-write, store global/static variables uninitialized data
 	------------------------
-	initialized data			//read from program file by exec
+	initialized data			//read-write, store global/static variables initialized data
 	------------------------
-	text						//read from program file by exec
+	text						//read-only, store machine-language of program
 	------------------------
   ///low address
 
@@ -64,14 +64,14 @@
 .used to identify process
 .some numbers is reserved for special process
 	swapd process
-	init process
+	init process	//là process đầu tiên run, là parent process của mọi process khác, có PID=1
 .các cmd line dùng PID để thao tác với process
 	ps -aux			//hiển thị danh sách các process đang chạy
 	lsof -p 3865	//hiển thị danh sách các file được mở bởi process PID 3865
 
 #6. fork function
 	pid_t fork(void)
-.tạo ra 1 process mới bằng cách duplicate process hiện tại (process parent)
+.tạo ra 1 process mới (child process) bằng cách duplicate process hiện tại (parent process)
 .tạo ra 1 bản sao cho bộ nhớ hiện tại của process
  PID thật sẽ được trả cho process con
  PID 0 sẽ được trả về cho process cha
@@ -137,3 +137,44 @@
  chèn đoạn mã vào 1 chương trình bất kỳ/1 daemon/1 thư viện
  khi 1 chương trình khác có quyền root thực hiện load thư viện (đã bị chèn mã virus) thì mã virus sẽ chạy
  và virus có quyền root nên có thể tạo process daemon mới
+
+#9. Kết thúc process
+.normally termination (kết thúc bình thường) -> sử dụng exit()
+	void _exit(int status);
+	void exit(int status);
+.abnormally termination (kết thúc bất thường) -> sử dụng cmd kill
+	kill -l
+	kill <PID>				//SIGTERM
+	kill -9 <PID>			//SIGKILL
+
+#10. Bổ Sung
+.trạng thái của process
+	S: sleeping
+	R: running
+	W: waiting
+	T: suspended
+	Z: zombie (defunct)
+
+.wait()
+		#include <sys/wait.h>
+		pid_t wait(int *status);
+	khi parent process gọi wait() -> hàm wait() sẽ block và đợi đến khi các child process kết thúc/thay đổi trạng thái
+	nếu child process kết thúc trước khi gọi wait() -> hàm wait() sẽ return ngay lập tức
+	khi wait() kết thúc -> wait() sẽ return PID của child process, hoặc (-1) nếu lỗi
+
+.waitpid()
+		#include <sys/wait.h>
+		pid_t waitpid(pid_t pid,int *status,int options);
+	nếu parent process có nhiều child process -> không thể dùng wait() để theo dõi 1 child process cụ thể -> sử dụng waitpid()
+
+.orphane/zombie process
+ vòng đời của parent process và child process không giống nhau
+	(1)nếu parent process kết thúc trước child process -> child process trở thành orphane process (mồ côi)
+		orphane process sẽ nhận init process (PID:1) là parent process
+		init process tiếp tục thu thập trạng thái của orphane process (như là child process)
+	(2)nếu child process kết thúc trước khi parent process gọi wait() -> child process trở thành zombie process (xác sống)
+		khi child process kết thúc -> 1 tín hiệu SIGCHILD được gửi tới parent process
+		nếu parent process không gọi wait()/waitpid() -> thì child process ko được xoá khỏi hệ thống, mà chuyển thành zombie process (status Z+)
+		zombie process đã giải phóng tài nguyên process, tuy nhiên vẫn giữ lại 1 số thông tin cơ bản (PID, trạng thái kết thúc process)
+		có 1 bảng PID của hệ thống có kích thước hữu hạn -> nếu có quá nhiều zombie process thì bảng PID sẽ đầy, hệ thống bị treo, không tạo thêm được process
+		giải pháp: luôn gọi wait()/waitpid() ở parent process

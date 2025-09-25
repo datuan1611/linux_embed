@@ -10,6 +10,19 @@ Thread: là luồng các lệnh mà CPU coi là 1 đối tượng khi sử dụn
 .Ưu điểm: tối ứng được phần cứng
 .Nhược điểm: có nguy cơ xung đột dữ liệu dùng chung, khó debug
 
+.thread là 1 lightweight process, có thể được quản lý bởi 1 bộ lập lịch
+ các thread có thể hoạt động song song, nếu 1 thread bị block thì thread khác vẫn hoạt động bình thường
+ khi 1 thread được tạo, chúng sẽ được đặt ở stack segment
+
+.So sánh giữa process và thread
+	(1)process cần nhiều thời gian "context switching time" hơn thread vì process nặng hơn thread
+	(2)process khó cjiwa sẻ dữ liệu hơn thread, phải sử dụng cơ chế IPC
+		vì các process nằm trên các vùng nhớ khác nhau
+		các thread của 1 process cùng nằm trên 1 vùng nhớ
+	(3)nếu 1 process bị crash thì các process vẫn thực thi bình thường,
+		nếu 1 thread bị crash thì tất cả thread chung process đều bị crash
+
+
 #3. Triển khai source code
 //library
 #include <pthread.h>
@@ -39,6 +52,8 @@ void pthread_exit(void *retval)
 int pthread_cancel(pthread_t thread)
 .để block cho đến khi thread cần đợi kết thúc, và return value nếu thread đã kết thúc từ trước
 int pthread_join(pthread_t thread, void **retval)
+
+.bất cứ thread nào call exit(), hoặc main thread kết thúc -> tất cả thread còn lại kết thúc ngay lập tức
 
 #4. Đồng bộ dữ liệu giữa các thread
 .CPU không truy cập trực tiếp vào RAM,
