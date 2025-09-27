@@ -1,4 +1,5 @@
 //06_IPC
+//from SWAT of FPT
 
 #0. IPC (Inter Process Communication)
 .trao đổi dữ liệu giữa các process trong cùng 1 machine
