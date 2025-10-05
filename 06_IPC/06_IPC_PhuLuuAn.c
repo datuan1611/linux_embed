@@ -3,9 +3,13 @@
 //url:	https://www.youtube.com/watch?v=EOEmic-870k		: IPC introduction
 //		https://www.youtube.com/watch?v=ViWv0t8U_-8		: signal
 //		https://www.youtube.com/watch?v=RP-PIdqnqiY		: shared mempry
+//		https://www.youtube.com/watch?v=-Fs6wAV7tEw		: socket
 
+//====================================================
 
-#1. INTRODUCTION
+#if 1	//0. INTRODUCTION
+
+#0. INTRODUCTION
 .IPC (Inter Process Communication): cơ chế trao đổi thông tin giữa các process với nhau
 .Linux Embed: focus vào giao tiếp giữa App ở tầng User Space với driver ở tầng Kernel Space
 
@@ -108,7 +112,11 @@ các IPC thường được dùng để giao tiếp giữa user space và kernel
 	đẩy data -> ép read/write qua device file
 	nếu truyền raw data: ioctl chậm hơn với read/write của device file
 
+#endif	//0. INTRODUCTION
+
 //====================================================
+
+#if 1	//#1. SIGNAL
 
 #1. SIGNAL
 .là cơ chế truyền tín hiệu giữa các process
@@ -341,8 +349,11 @@ các IPC thường được dùng để giao tiếp giữa user space và kernel
 		 -sau khi ghi xong: dùng signal để thông báo cho process còn lại
 		 -process còn lại nhận được signal -> mở file lên -> đọc biến counter -> ghi giá trị mới..
 
+#endif	//#1. SIGNAL
 
 //====================================================
+
+#if 1	//#2. SHARED MEMORY
 
 #2. SHARED MEMORY
 
@@ -461,3 +472,170 @@ các IPC thường được dùng để giao tiếp giữa user space và kernel
 
 .Bổ sung:
 	tìm hiểu thêm về cơ chế lock/unlock để sync data với shared memory
+
+#endif	//#2. SHARED MEMORY
+
+//====================================================
+
+#if 1	//#3. SOCKET
+
+#3. SOCKET
+.socket: cửa ngõ của hệ thống có thể giao tiếp với bên ngoài ở internet
+
+.mạng máy tính
+địa chỉ IP
+	IPv4
+		dãy số 32 bit, dùng 4 byte để đánh địa chỉ, tối đa 4 tỷ địa chỉ IP
+	dùng để định danh các máy tính trong mạng internet
+	ở đầu mỗi bản tin được truyền trong internet đều gắn địa chỉ IP
+Global IP và Local IP
+	vì tổng thiết bị PC trên internet đã nhiều hơn 4 tỷ >> cần gom nhóm IP
+	với mỗi mạng LAN cục bộ:
+		các thiết bị có chung 1 global IP với IP của wifi modern
+		cục rounter sẽ chia tiếp local IP cho các thiết bị trong mạng LAN
+	(IPv6, dùng 6 byte để đánh IP, hiện nay vẫn chưa dùng phổ biển)
+Port
+	trên 1 PC có nhiều ứng dụng cùng lúc connect ra internet
+	mỗi 1 ứng dụng đăng ký với OS 1 port là 1 số nguyên ko âm để định danh
+	trong bản tin gửi tới PC, ngoài IP còn có số Port Number >> biết được gói tin gửi tới ứng dụng nào
+
+Client & Server
+	là cơ chế thiết lập kênh truyền giữa các thiết bị trong internet
+	Client:
+		phải biết IP của server
+		phải chủ động connect đến server
+		phải gửi bản tin yêu cầu kết nối tới server
+	Server:
+		ko quan tâm IP của Client
+		chỉ chủ động lắng ngăn
+		khi nhận bản tin yêu cầu kết nối từ client, có thể chấp nhận hoặc từ chối
+		- chấp nhận: sẽ thiết lập kênh truyền, bản tin được gửi trong kênh truyền đó
+		- từ chối: ko thiết lập kênh truyền
+
+.Socket overview
+	socket là các file ở dạng endpoint, khi ghi data vào 1 đầu thì data sẽ được gửi sang 1 hoặc nhiều đầu khác
+	khác với các file thông thường:
+		- socket cho phép data được gửi ra khỏi máy đi vào mạng internet
+		- là file point-to-point, data khi đi vào 1 socket ở đầu đường ống >> data sẽ đi ra ở 1 socket ở cuối đường ống
+
+.Coding
+	1-Create a soket
+		#include <sys/socket.h>
+		int socket(int domain, int type, int protocol)	//create an endpoint for communication
+				//domain: chỉ định phương thức giao tiếp là ghi data ra ngoài, hoặc chỉ trung chuyển trong hệ thống?
+				//		AF_UNIX		Local communication
+				//		AF_INET		IPv4 Internet protocols
+				//		AF_CAN		Controller Area Network automotive bus protocol
+				//type: định nghĩa cách truyền dữ liệu
+				//		SOCK_STREAM	| SOCK_DGRAM | SOCK_SEQPACKET | SOCK_RAW | SOCK_RDM | SOCK_PACKET | SOCK_NONBLOCK | SOCK_CLOEXEC
+				//protocol: định nghĩa chuẩn giao tiếp
+				//return: trả về file fd đại diện cho socket
+
+	2-Address bytes ordering
+		big endian và little endian: chỉ định cách sắp xếp byte trong bộ nhớ
+			1 số 4 byte:
+				0x12345678
+			big endian: byte lớn ưu tiên sắp xếp trước, thứ tự byte trong memory giống như khi ta viết
+				0x00: 12
+				0x01: 34
+				0x02: 56
+				0x03: 78
+				//[12][34][56][78]
+			little endian: byte nhỏ ưu tiên sắp xếp trước, thứ tự byte trong memory ngược với khi ta viết
+				0x00: 78
+				0x01: 56
+				0x02: 34
+				0x03: 12
+				//[78][56][34][12]
+			có khác biệt 1 số dòng CHIP, big endian (network, PowerPC) và little endian (intel, amd, arm)
+
+		cần 1 chuẩn chung trong network để tất cả có thể hiểu được
+			trong network chỉ dùng chuẩn big endian,
+			mọi bản tin phải convert theo chuẩn big endian khi truyền vào network
+		
+		các hàm convert order của data từ máy tính sang network
+			#include <arpa/inet.h>
+			uint32_t htonl(uint32_t hostlong);
+			uint16_t htons(uint16_t hostshort);
+			uint32_t ntohl(uint32_t netlong);
+			uint16_t ntohs(uint16_t netshort);
+
+	3-Address format
+			#include <sys/socket.h>
+			struct sockaddr {
+				sa_family_t		sa_family;		/* Address family */
+				char			sa_data[];		/* Socket address */
+			};
+			#include <netinet/in.h>
+			struct sockaddr_in {
+				sa_family_t		sin_family;		/* AF_INET */
+				in_port_t		sin_port;		/* Port number */
+				struct in_addr	sin_addr;		/* IPv4 address */
+			};
+
+	4-Gán địa chỉ cho socket
+		sau khi server gán địa chỉ cho socket, mỗi khi ghi data xuống socket file,
+		data sẽ đóng gói kèm địa chỉ và được phân luồng để gửi đến máy đích
+			#include <sys/socket.h>
+			int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);	//bind a name to a socket
+
+	5-Thiết lập kết nối
+			#include <sys/socket.h>
+			//CLIENT
+			int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);	//initiate a connection on a socket
+					//addr: địa chỉ server
+					//gửi bản tin xin được kết nối tới server
+			#include <unistd.h>
+			size_t read(int fd, void buf[size_t count], size_t count);	//ead from a file descriptor
+			size_t write(int fd, const void buf[size_t count], size_t count);	//write to a file descriptor
+			int close(int fd);		//close a file descriptor
+					//sau khi kết nối, client gửi nhận data tới server bằng hàm read/write
+					//client gửi nhận trực tiếp vào socket yêu cầu kết nối tới server
+					//client ko cần tạo thêm socket kết nối point-to-point như server
+					//nếu ko muốn kết nối với server nữa, client call hàm close()
+			//SERVER
+			int listen(int sockfd, int backlog);	//listen for connections on a socket
+					//tạo ra 1 hàng đợi, số ô trong hàng đợi bằng số backlog
+					//mỗi bản tin từ client được đẩy vào 1 ô trong hàng đợi
+			int accept(int sockfd, struct sockaddr *_Nullable restrict addr, socklen_t *_Nullable restrict addrlen);	//accept a connection on a socket
+					//server sẽ quyết định đồng ý kết nối với client trong hàng đợi hay ko
+					//nếu đồng ý sẽ tạo socket mới để point-to-point với client
+					//(sockfd chỉ là socket được tao ra ban đầu để server lắng nghe các bản tin kết nối)
+			#include <unistd.h>
+			size_t read(int fd, void buf[size_t count], size_t count);	//ead from a file descriptor
+			size_t write(int fd, const void buf[size_t count], size_t count);	//write to a file descriptor
+			int close(int fd);		//close a file descriptor
+					//sau khi accept, server có thể gửi nhận data vào client qua hàm read/write
+					//nếu ko muốn connect với client nữa >> call hàm close()
+					//server có 2 loại socket
+					//(1) listenning socket: chỉ cần 1 socket
+					//(2) connection socket: cần [backlog] socket để kết nối point-to-point tới [backlog] client
+	
+			<< SERVER >>		|		<< CLIENT >>
+			socket()			|		socket()
+			init sockaddr_in	|		init sockaddr_in
+			bind()				|		connect()
+			listen()			|		-
+			accept()			|		-
+			-	-	-	-	<< COMMON >>	-	-	-	-
+								send()
+								read()
+								write()
+								close()
+
+.Exercise
+	ở linux có card mạng ảo, có look-back interface:
+		inet addr: 127.0.0.1
+		Mask: 255.0.0.0
+	tất cả bản tin gửi tới look-back interface >> bản tin gửi ngược lại máy tính
+	có thể viết 2 ứng dụng client-server chat bản tin cho nhau qua card mạng look-back này
+	(khuyến cáo: nên viết 2 ứng dựng client-server chat với nhau từ 2 máy ảo ở 2 PC khác nhau)
+
+.Homework
+	1-Viết chương trình chat theo mô hình client-server, cả 2 chạy trên cùng 1 PC
+	2-Viết chương trình chat client-server cho phép chat trong mạng LAN
+	3-Viết chương trình cho phép gửi nhận file từ nhà và công ty
+
+#endif	//#2. SHARED MEMORY
+
+//====================================================
