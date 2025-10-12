@@ -464,9 +464,10 @@ các IPC thường được dùng để giao tiếp giữa user space và kernel
 	Note:
 		1-khi compile, phải build với flag [-lrt]
 		2-khi có 3 process cùng dùng 1 shared memory >> trong struct page{} có biết counter = 3
-		  shm_unlink() được call sẽ đánh dấu, set flag unlink của page, và tiếp tục đợi biến counter về 0
 		  khi tất cả các process munmap() thì biến counter = 0
-		  lúc này khi counter đã về 0, và flag unlink đã được set trước đó >> page được free (remove)
+		  shm_unlink() được call sẽ ko free shared memory luôn mà chỉ đánh dấu, set flag unlink của page
+		  shm_fd sẽ đợi đến khi counter về 0, và lúc này flag unlink đã được set rồi >> page được free (remove)
+		  sau khi shm_fd được free, các process sẽ không đọc lại được vùng nhớ shared memory này >> bị crash
 		3-nếu shared memory với data lớn (nhiều Gigabytes) -> mmap API nhanh hơn shm API
 
 .exercise

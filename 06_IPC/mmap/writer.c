@@ -18,6 +18,7 @@ int main(int argc, char **argv)
 	ftruncate(shm_fd, 4096);
 	ptr = mmap(0, 4096, PROT_WRITE, MAP_SHARED, shm_fd, 0);
 	strcpy(ptr, message_0);
+	munmap(ptr, 4096);
 
 	return EXIT_SUCCESS;
 }

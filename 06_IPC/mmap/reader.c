@@ -17,6 +17,7 @@ int main(int argc, char **argv)
 	shm_fd = shm_open("hello_class", O_RDONLY, 0666);
 	ptr = mmap(0, 4096, PROT_READ, MAP_SHARED, shm_fd, 0);
 	printf("%s", (char*)ptr);
+	munmap(ptr, 4096);
 	shm_unlink("hello_class");
 
 	return EXIT_SUCCESS;
