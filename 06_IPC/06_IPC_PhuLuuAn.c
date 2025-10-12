@@ -357,8 +357,14 @@ các IPC thường được dùng để giao tiếp giữa user space và kernel
 
 #2. SHARED MEMORY
 
+.Đơn vị quản lý memory:
+	word: quản lý theo truy cập, đơn vị theo địa chỉ, mỗi word là 4 hoặc 8 byte (32 bit và 64 bit)
+	page: quản lý thuần quản lý, tất cả byte có chung 1 thuộc tích (ReadOnly, thuộc sở hữu của ai...)
+
 .OS không quản lý bộ nhớ theo từng byte, mà quản lý theo từng page (có kích thước cố định, ~ 400 kB)
 .linux có define struct page, có các trường thông tin
+		#include <linux/mm_types.h>
+		struct page {}
 	permission: có bit chứa thông tin quyền đọc/ghi (ví dụ chmod 755)
 	flag: có được mở rộng ra không? có thuộc cache mem hay không? có map với 1 file nào không?
 
@@ -412,30 +418,37 @@ các IPC thường được dùng để giao tiếp giữa user space và kernel
 		4-process read/write shared memory
 		5-unmapping shared memory with VAS of process
 		6-close file fd
+			*ở [2] chỉ set size nếu [1] trỏ vào file fd không tồn tại
+			*annomous page: nếu tất cả process unmap mà ko close file fd thì bị leak memory, vùng nhớ vẫn chưa được giải phóng, ko thể dùng cho task vụ khác
 	coding:
+		#include <sys/shm.h>
 		#include <sys/mman.h>
 		#include <sys/stat.h>
 		#include <fcntl.h>
-		#include 
+		#include <unistd.h>
 		int shm_open(const char *name, int oflag, mode_t mode);	//create/open shared memory object
-				//name: tên của shm object, nên đặt theo form [/name]
+				//name: tên định danh của shm object, nên đặt theo form [/name]
 				//		có thể truyền vào 1 tên file bất kỳ, ko nhất thiết 1 file existing
-				//oflag: O_RDONLY | O_RDWR | O_CREAT | O_EXCL | O_TRUNC
-				//mode: mask [rwxrwxrwx] giống chong chmod, thường đặt là 0666 (rw-rw-rw-)
+				//		nếu dùng fd để mở file (dev/mem) đại diện cho vùng nhớ vật lý, khi đó application có thể thao tác với thanh ghi
+				//oflag: chế độ mở file: O_RDONLY | O_RDWR | O_CREAT | O_EXCL | O_TRUNC
+				//mode: mode mở file, mask [rwxrwxrwx] giống chmod, thường đặt là 0666 (rw-rw-rw-)
 		int ftruncate(int fildes, off_t length);
+				//khởi tạo vùng nhớ vật lý cho file fd
 				//nếu shm_open() để mở 1 file ko tồn tại thì cần call ftruncate() để set SIZE cho file fd
 				//nếu shm_open() để mở 1 file đã tồn tại thì ko cần call ftruncate()
 		void *mmap(void addr[size_t length], size_t length, int prot, int flags, int fd, off_t offset); //mapping files or devices into memory
-				//addr: địa chỉ bắt đầu mmap, nên truyền NULL
+				//addr: địa chỉ bắt đầu mmap, nên truyền NULL, sẽ tìm vùng nhớ ảo còn trống có địa chỉ nhỏ nhất >> giá trị con trỏ return
 				//length: độ dài của của vùng mmap, nên là bội số size của page
 				//prot: priority của vùng mmap = PROT_EXEC | PROT_READ | PROT_WRITE | PROT_NONE
+				//		mode muốn nmap, nếu shm_open() có mode 0666 thì chỉ mmap() với quyền nhỏ hơn
 				//flag: nếu để là MAP_ANONYMOUS, là shared mem thuần tuý, ko cần sync xuống file trong ổ cứng
 				//		thì ko check file fd nữa mà tạo 1 vùng nhớ trong ổ cứng rồi mmap vào đó,
 				//		có thể truyền file fd là 1 số bất kỳ 2,3,4,5 (tức là file fd ko exist)
 				//		nếu file fd ko exist thì ko call hàm close(), nếu call close() sẽ crash process
 				//		MAP_SHARED | MAP_SHARED_VALIDATE | MAP_PRIVATE | MAP_32BIT | MAP_ANON | MAP_ANONYMOUS | MAP_DENYWRITE | MAP_EXECUTABLE | MAP_FILE | MAP_FIXED ...
 				//fd: con trỏ file đã tạo ở hàm shm_open()
-				//offset: địa chỉ file fd muốn bắt đầu mmap
+				//offset: địa chỉ file fd muốn bắt đầu mmap (tính từ đầu file fd)
+				//		nếu mmap vào file (dev/mem) thì offset chính là địa chỉ vật lý luôn
 		int munmap(void addr[size_t length], size_t length);	//unmapping files or devices into memory
 				//addr: địa chỉ mmap trả về từ hàm mmap()
 		int shm_unlink(const char *name);	//remove shared memory object
@@ -449,7 +462,12 @@ các IPC thường được dùng để giao tiếp giữa user space và kernel
 		shm_unlink(name);
 
 	Note:
-		nếu shared memory với data lớn (nhiều Gigabytes) -> mmap API nhanh hơn shm API
+		1-khi compile, phải build với flag [-lrt]
+		2-khi có 3 process cùng dùng 1 shared memory >> trong struct page{} có biết counter = 3
+		  shm_unlink() được call sẽ đánh dấu, set flag unlink của page, và tiếp tục đợi biến counter về 0
+		  khi tất cả các process munmap() thì biến counter = 0
+		  lúc này khi counter đã về 0, và flag unlink đã được set trước đó >> page được free (remove)
+		3-nếu shared memory với data lớn (nhiều Gigabytes) -> mmap API nhanh hơn shm API
 
 .exercise
 	viết ứng dụng chat client - server trong cùng 1 PC
@@ -636,6 +654,6 @@ Client & Server
 	2-Viết chương trình chat client-server cho phép chat trong mạng LAN
 	3-Viết chương trình cho phép gửi nhận file từ nhà và công ty
 
-#endif	//#2. SHARED MEMORY
+#endif	//#3. SOCKET
 
 //====================================================
