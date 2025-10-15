@@ -24,19 +24,20 @@ vi
 	mode
 		command		//press ESC
 			:set number			//show line number
+			:set nowrap			//not wrap line
 			:set autoindent		//tự động tab khi xuống dòng
 			:syntax on			//hiển thị color trong vim
 			:echo expand("%:p")	//hiển thị đường dẫn file source (hoặc Ctrl+G)
-			:x					//nhảy đến dòng x
-			/string				//tìm kiếm chuỗi string
+			/string				//tìm kiếm chuỗi string, press [n/N] để chuyển đến vị trí tiếp theo/trước đó
 			:%s/old/new/gc		//[%] toàn bộ file source, [g] tất cả lần xuất hiện, [c] có hỏi confirm
-			:wq					//save và quit
 			yy - p				//copy - paste
 			dd - d$ - dG -x		//xoá 1 dòng - xóa từ con trỏ đến cuối dòng - xoá từ dòng hiện tại đến cuối file - xoá 1 từ
 			u - Ctrl+r			//undo - redo
 			0 - ^ - $			//di chuyển chuột đến đầu dòng - từ tiếp theo - cuối dòng
 			:5,10 >				//tab từ dòng 5 đến dòng 10
 			:5,10 <				//untab từ dòng 5 đến dòng 10
+			:10					//nhảy đến dòng 10
+			:wq					//save và quit
 		insert		//press i
 
 	//helloworld.c
