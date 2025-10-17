@@ -36,6 +36,7 @@ vi
 			0 - ^ - $			//di chuyển chuột đến đầu dòng - từ tiếp theo - cuối dòng
 			:5,10 >				//tab từ dòng 5 đến dòng 10
 			:5,10 <				//untab từ dòng 5 đến dòng 10
+			:5,10d				//xoá từ dòng 5 đến dòng 10
 			:10					//nhảy đến dòng 10
 			:wq					//save và quit
 		insert		//press i
