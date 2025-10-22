@@ -655,6 +655,106 @@ Client & Server
 	2-Viết chương trình chat client-server cho phép chat trong mạng LAN
 	3-Viết chương trình cho phép gửi nhận file từ nhà và công ty
 
+.Bổ sung
+	1-Đặc điểm của Socket
+		mỗi socket được định danh bởi
+			.IP
+			.Port
+			.giao thức (TCP / UDP)
+	2-Phân loại Socket
+		phân loại theo giao thức
+			.TCP: các gói tin sẽ đến đúng và đủ theo thứ tự
+				-> ứng dụng mail, chat...
+			.UDP: ko quan tâm các gói tin có đến đúng và đủ theo thứ tự không,
+				  bù lại các gói tin được gửi đến rất nhanh
+				-> ứng dụng game online...
+		phân loại theo vị trí process
+			.Unix domain socket: giữa các process trong cùng PC
+			.Internet socket: giữa các process khác PC trong internet
+	3-API
+		TCP socket:
+			socket() -> bind() -> listen() -> connect() -> accept() -> recv()/send() -> close()
+		UDP socket: (connectionless protocol)
+			socket() -> bind() 									-> recvfrom()/sendto() -> close()
+		include header:
+			<sys/socket.h>
+			<netinet/in.h>
+			<arpa/inet.h>
+			<unistd.h>
+		sau khi close 1 socket, kernel sẽ giữ IP/Port của socket trong thời gian 30 giây / 1 phút
+		lúc này nếu bind() IP/Port trên cho 1 socket mới >> phát sinh lỗi "Address already in use"
+		do đó ngay trước khi bind() socket vào 1 IP/Port >> nên gọi hàm setsockopt() với flag SO_REUSEADDR
+
+	4-Xử lý nhiều client trong IPC Socket
+		Multithreading: 1980s
+			với mỗi client connect tới, server sẽ sử dụng pthread_create() để tạo 1 thread riêng để xử lý  cho client đó
+			ưu điểm: đơn giản, xử lý blocking I/O dễ dàng
+			nhược điểm: nếu nhiều client thì phải tạo nhiều thread, tiêu tốn nhiêù vùng nhớ stack và CPU
+		Select: 1990s, BSD Unix
+			sử dụng select(fd_set, timeout) để giám sát nhiều file fd trên 1 thread
+			ưu điểm: ko cần multi-thread, xử lý non-blocking I/O
+			nhược điểm: giới hạn 1024 file FD (fd_set size), tốn nhiều effort CPU để duyệt mảng fd_set
+			kernel giám sát tất cả các file fd, trả về trạng thái fd_set đã sẵn sàng read/write dữ liệu chưa cho hàm select()
+			fd_set là 1 mảng 1 chiều các bit 0/1; 0 là chưa sẵn sàng, 1 là sẵn sàng
+		Poll: 2001, Linux 2.4
+			cải tiến so với select(), sử dụng mảng động pollfd[]
+			ưu điểm: không giới hạn FD cố đinh, vẫn single-thread
+			nhược điểm: giống select(), kernel vẫn phải duyệt qua mảng pollfd[], tốn effort CPU
+		Epoll: 2002, Linux 2.5
+			event-driven I/O, edge/level-triggered
+			sử dụng epoll_ctl() đăng ký 1 lần với kernel ngay từ đầu
+			sau đó mỗi lần call epoll_wait() thì kernel trả về danh sách các fd sẵn sằng, mà ko cần duyệt qua mảng nào cả
+			ưu điểm: scale đến hàng triệu client, ko tốn effort CPU
+			nhược điểm: chỉ aplly ở Linux (POSIX-like, không phải POSIX thuần)
+
+		blocking		-> non-blocking 	-> event-loop
+		multi-thread	-> select/poll 		-> epoll
+	
+	5-Epoll
+		API của Linux, dùng để giám sát I/O event trên nhiều file FD mà không bị blocking
+		epoll_ctl() dùng để thêm/xoá FD theo dõi, epoll_wait() trả về ready event
+		scale: hỗ trợ > 1 triệu kết nối, sử dụng kernel callback thay vì user-space scan
+		có 2 mode:
+			.Edge-triggered: chỉ notify khi event thay đổi giữa có/không có data
+			.Level-triggered: notify liên tục khi ready cho đến khi kernel đọc/ghi hết data trong buffer của FD
+
+			coding:
+			(1)khởi tạo server
+				.socket() -> bind() -> listen() : như bình thường
+				.tạo epoll_fd để theo dõi các file fd:
+					epoll_create1(0)
+				.thêm listen_fd vào epoll_fd:
+					epoll_ctl(epoll_fd, EPOLL_CTL_ADD,listen_fd,EPOLLIN)
+			(2)event loop chính:
+				.vòng lặp duyệt các ready event:
+					nfds = epoll_wait(epoll_fd,events,MAX_EVENTS,-1)
+				.IF: event[i].data.fd == listen_fd
+					-> accept() và thêm client_fd vào epoll
+				.ELSE:
+					-> read/write non-blocking: fcntl(fd,F_SETFL, O_NONBLOCK)
+			(3)xử lý lỗi
+				kiểm tra EPOLLERR/EPOLLHUP, close FD nếu cần
+
+		áp dụng thực tiễn:
+			epoll chỉ dùng single-thread mỗi lần xử lý 1 client, ko tận dụng được khả năng CPU đa luồng
+			với các server lớn sử dụng mô hình Hybrid: Epoll + Multi-thread
+				Main thread: Epoll cho I/O multiplexing (accept connections, phân phối task)
+				Worker threads: xử lý business logic (pthread pool, queue tasks từ main thread)
+			sử dụng epoll để giám sát các fd sẵn sàng + nhận tasks từ clients
+			sau đó ném các task này cho các worker thread để xử lý logic cho các tasks
+
+		uu điểm:
+			.hiệu xuất cao: xử lý 10k+ connections với low latency (độ trễ thấp)
+			.tiết kiệm tài nguyên: ít context switch hơn multi-thread thuần
+			.linh hoạt: dễ mở rộng với cloud (Docker, Kubernetes)
+		nhược điểm:
+			.code phức tạp: non-blocking, error handling
+			.platform-specific: epoll chỉ dùng được trên linux
+			.debug khó: race conditions trong multi-thread
+
+	Kết luận:
+		server hiện tại ưu tiên dùng epoll hybrid, tức là event-driven + parallelism để scale
+
 #endif	//#3. SOCKET
 
 //====================================================
