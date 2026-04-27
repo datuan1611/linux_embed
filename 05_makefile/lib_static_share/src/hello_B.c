@@ -2,6 +2,6 @@
 
 void Hello_B(void)
 {
-	printf("Hello B!\n");
+	printf("Hello B !!!\n");
 	return;
 }

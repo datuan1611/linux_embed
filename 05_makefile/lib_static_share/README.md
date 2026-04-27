@@ -1,4 +1,4 @@
-##static lib && shared lib
+﻿##static lib && shared lib
 
 #tree
 .
@@ -10,16 +10,19 @@
 │   └── hello_B.h
 ├── lib
 │   ├── shared
-│   │   └── libhello.a
+│   │   └── libhello.so
 │   └── static
 │       └── libhello.a
 ├── main.c
 ├── Makefile
 ├── obj
-│   ├── hello_A.o
-│   ├── hello_B.o
-│   └── main.o
-├── README.md
+│   ├── main.o
+│   ├── shared
+│   │   ├── hello_A.o
+│   │   └── hello_B.o
+│   └── static
+│       ├── hello_A.o
+│       └── hello_B.o
 └── src
     ├── hello_A.c
     └── hello_B.c
