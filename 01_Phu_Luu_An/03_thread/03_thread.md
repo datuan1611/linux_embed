@@ -1,0 +1,142 @@
+# unit3_thread
+
+## 1. Ứng Dụng
+```text
+lập trình đa luồng giúp tối ưu hoá tài nguyên hardware trong hệ thống
+giúp hệ thống chạy nhanh nhất, mượt mà nhất có thể
+```
+
+## 2. Định Nghĩa
+```text
+Thread: là luồng các lệnh mà CPU coi là 1 đối tượng khi sử dụng bộ lập lịch
+
+.Ưu điểm: tối ưu được phần cứng
+.Nhược điểm: có nguy cơ xung đột dữ liệu dùng chung, khó debug
+
+.thread là 1 lightweight process, có thể được quản lý bởi 1 bộ lập lịch
+	các thread có thể hoạt động song song, nếu 1 thread bị block thì thread khác vẫn hoạt động bình thường
+	khi 1 thread được tạo, chúng sẽ được đặt ở stack segment
+
+.So sánh giữa process và thread
+	(1)process cần nhiều thời gian "context switching time" hơn thread vì process nặng hơn thread
+	(2)process khó chia sẻ dữ liệu hơn thread, phải sử dụng cơ chế IPC
+		vì các process nằm trên các vùng nhớ khác nhau
+		các thread của 1 process cùng nằm trên 1 vùng nhớ
+	(3)nếu 1 process bị crash thì các process vẫn thực thi bình thường,
+	   nếu 1 thread bị crash thì tất cả thread chung process đều bị crash
+```
+
+## 3. Triển khai source code
+```C
+//library
+#include <pthread.h>
+
+//tạo thêm thread mới
+int pthread_create(	pthread_t *restrict thread,				//thread ID
+					const pthread_attr_t *restrict attr,	//thuộc tích của thread được tạo ra (NULL nếu để mặc định)
+					void *(*start_routine)(void *),			//khi thread chạy thì call con trỏ hàm start_routine
+					void *restrict arg );					//tham số truyền vào con trỏ hàm hàm start_routine (NULL nếu không truyền gì cả)
+return 0; //if OK
+return error_number; //on failure
+
+//đợi hàm start_routine kết thúc, cũng là lúc thread kết thúc
+//nếu hàm start_routine của thread kết thúc rồi, thì pthread_join không đợi nữa
+//pthread_join() đảm bảo (1) hàm start_routine đã kết thúc và (2) giải phóng tài nguyên thread
+int pthread_join(	pthread_t thread,	//thread ID
+					void **retval);		//giá trị trả về của hàm start_routine()
+
+//khi compile source code thì phải thêm flag "-pthread"
+gcc -g -o hellothread_exe -pthread hello_thread.c
+
+//dùng cmd "time" để đo performance của chương trình
+time hellothread_exe
+
+//để kết thúc 1 thread chủ động: call pthread_exit() hoặc return trong hàm start_routine của thread
+void pthread_exit(void *retval)
+
+//để kết thúc 1 thread bị động: call pthread_cancel() ở 1 thread khác để huỷ thread này
+int pthread_cancel(pthread_t thread)
+
+//để block cho đến khi thread cần đợi kết thúc, và return value nếu thread đã kết thúc từ trước
+int pthread_join(pthread_t thread, void **retval)
+
+//bất cứ thread nào call exit(), hoặc main thread kết thúc -> tất cả thread còn lại kết thúc ngay lập tức
+```
+
+## 4. Đồng bộ dữ liệu giữa các thread
+```C
+.CPU không truy cập trực tiếp vào RAM,
+	khi muốn dùng 1 biến trong RAM, CPU nạp biến đấy vào cache của core CPU
+	CPU thao tác tính toán trên cache, sau 1 thời gian sẽ sync data ở cache vào RAM
+
+.do cơ chế cache, khi lập trình multithread sẽ bị xung đột data, CPU không load được giá trị mới nhất của biến
+
+.khi khai báo "volatile" cho biến -> CPU không sử dụng cache, mà truy cập thẳng vào RAM
+	tuy nhiên khi tính toán, CPU sẽ thực hiện các việc:
+		(1)nạp giá trị vào thanh ghi
+		(2)tăng giá trị trong thanh ghi
+		(3)truyền giá trị vào RAM
+	do đó vẫn bị cache giá trị trong thanh ghi
+	"volatile" vẫn không khắc phụ được vấn đề trên
+	NOTE:"volatile" không dùng cache nên xử lý tính toán bị chậm hơn
+
+.khi sử dụng std::queue
+	(1)thread_1 lấy dữ liệu từ sensor, dùng push_back() để đẩy vào queue
+	(2)thread_2 dùng empty() để check queue có dữ liệu hay không, rồi dùng pop_front() để lấy dữ liệu từ queue
+	NOTE:
+		có bug sau khi thread_1 đẩy dữ liệu vào queue rồi, nhưng thread_2 vẫn check ra empty
+		nguyên nhân là do khi thread_1 đẩy dữ liệu vào queue, biến count trong hàm empty() đã tăng nhưng vẫn ở cache, chưa lưu vào RAM
+		do đó khi thread_2 check empty() thì biến count vẫn là 0, và hiểu là ở queue vẫn chưa có data
+
+.khắc phục xung đột data bằng mutex hoặc semaphore:
+
+A.MUTEX
+	chỉ có 1 khoá duy nhất
+	trong 1 thời điểm chỉ có 1 thread có được khoá, các thread khác phải đợi
+		#include <pthread.h>
+		pthread_mutex_t mutex_name
+		int pthread_mutex_init(pthread_mutex_t *restrict mutex, const pthread_mutexattr_t *restrict attr)
+		int pthread_mutex_destroy(pthread_mutex_t *mutex)
+		int pthread_mutex_lock(pthread_mutex_t *mutex)
+		int pthread_mutex_unlock(pthread_mutex_t *mutex)
+		int pthread_mutex_trylock(pthread_mutex_t *mutex)
+	trong trường hợp khoá bị chiếm bởi thread khác rồi, làm cho sleep thread đang check
+	thực tế, thread dùng pthread_mutex_trylock() để check khoá có đang bị chiếm bởi thread khác không?
+	nếu khoá đang chưa bị lock bởi thread khác -> thực hiện lock mutex và handle với data
+	nếu khoá đang bị lock bởi thread khác -> ko sleep thread, mà return để thực hiện việc khác (không đợi, không handle data)
+
+B.SEMAPHORE
+	có 1 hoặc nhiều khoá
+	trong 1 thời điểm có thể có 1 hoặc nhiều thread có được khoá
+		#include <semaphore.h>
+		sem_t sem_name
+		int sem_init(sem_t *sem, int pshared, unsigned int value)
+		int sem_wait(sem_t *sem)
+		int sem_post(sem_t *sem)
+		int sem_destroy(sem_t *sem)
+	named semaphore dùng để lock giữa các process
+
+.Dead Lock:
+	định nghĩa  : là trạng thái có 2 hoặc nhiều thread đi vào vòng lặp vô tận để chờ đợi tài nguyên của nhau
+	nguyên nhân : 2 hoặc nhiều thread sử dụng chung nhiều lock để hoàn thành công việc
+	giải pháp   : giảm số lượng lock trong source code
+
+	1 trường hợp khác về dead_lock, là khi có ngắt dù chỉ dùng 1 lock
+	khi dùng 1 lock, thread lock sẽ chiếm CPU để xử lý, còn thread khác sẽ sleep và nhả CPU
+	nhưng với hàm ngắt thì ko sleep, độ ưu tiên cao, chiếm dụng CPU luôn, ko xong sẽ ko để hàm khác chạy
+	cho nên khi rơi vào khả năng sau có thể gây ra dead_lock:
+		thread_1 có hàm chiếm lock -> nhưng ko có CPU để xử lý xong task
+		thread_2 có hàm ngắt chiếm CPU -> nhưng ko có lock để xử lý xong task
+	với linux kernel có chức năng "lockdep", có thể debug và phát hiện dead_lock nếu nó xảy ra
+
+.lập trình multithread mutex/semaphore là ở tầng user-interface
+	ở tầng kernel cũng có xử lý multithread tương tự mutex/semaphore
+
+.hàm ngắt interupt
+	các hàm ngắt hardware-interupt và software-interupt là ở tầng kernel
+	độ ưu tiên hardware-interupt > software-interupt == thread ở kernel > thread ở user-interface
+	signal-handler là xử lý tương tự hàm ngắt interupt ở kernel, độ ưu tiên cao
+	(cần tìm hiểu thêm xử lý signal của kernel, ví dụ E301/E302...)
+
+.trong linux, mỗi thread/process đều được quản lý bởi 1 struct task_struct
+```
