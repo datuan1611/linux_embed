@@ -112,34 +112,32 @@ chỉ 1 vài cơ chế IPC có thể giao tiếp giữa user space và kernel sp
 	<br>nếu truyền raw data: ioctl chậm hơn với read/write của device file
 
 ## 1. SIGNAL
-```text
-.là cơ chế truyền tín hiệu giữa các process
+- là cơ chế truyền tín hiệu giữa các process
 
-.bản chất là software interupt
- OS cung cấp cho mỗi process 1 bảng signal table, process đăng ký các hàm handler xử lý signal vào đấy
- khi có 1 signal xảy ra với process, thì OS sẽ tự động call hàm handler xử lý cho signal đấy
- signal xảy ra là 1 event ngẫu nhiên từ bên ngoài tới process
- khi phát sinh signal, process xử lý signal như là xử lý interupt
-	process sẽ dừng hết ở luồng xử lý chính, lưu thông tin process vào stack
-	process nhảy vào vào luồng xử lý signal kia (hàm handler đã đăng ký)
-	sau khi xử lý xong signal, process restore thông tin ở stack và quay lại chạy tiếp luồng xử lý chính
+- bản chất là software interupt
+	+ OS cung cấp cho mỗi process 1 bảng signal table, process đăng ký các hàm handler xử lý signal vào đấy
+	+ khi có 1 signal xảy ra với process, thì OS sẽ tự động call hàm handler xử lý cho signal đấy
+	+ signal xảy ra là 1 event ngẫu nhiên từ bên ngoài tới process
+	+ khi phát sinh signal, process xử lý signal như là xử lý interupt
+	<br>process sẽ dừng hết ở luồng xử lý chính, lưu thông tin process vào stack
+	<br>process nhảy vào vào luồng xử lý signal kia (hàm handler đã đăng ký)
+	<br>sau khi xử lý xong signal, process restore thông tin ở stack và quay lại chạy tiếp luồng xử lý chính
 
-.bảng signal có 32 cell, để đăng ký signal handler
+- bảng signal có 32 cell, để đăng ký signal handler
+- các trường hợp xảy ra signal
+	+ user sử dụng command line (ex: kill)
+	+ process gửi signal đi
+	+ chương trình gặp lỗi (ex: chạy con trỏ NULL, mở file ko tồn taị)
+	+ user ấn 1 số tổ hợp phím đặc biệt (ex: Ctrl+C)
 
-.các trường hợp xảy ra signal
-	user sử dụng command line (ex: kill)
-	process gửi signal đi
-	chương trình gặp lỗi (ex: chạy con trỏ NULL, mở file ko tồn taị)
-	user ấn 1 số tổ hợp phím đặc biệt (ex: Ctrl+C)
+- có 4 loại signal
+	+ signal có thể ignore (ex: tổ hợp phím Ctrl+C)
+	+ signal không thể ignore (ex: chia cho "0", truy cập con trỏ NULL, ghi vào 1 file invalid)
+	+ signal có thể chủ động điều khiển được (có thể viết 1 hàm handler cho nó, rồi đăng ký với OS)
+	+ signal không thể chủ động điều khiển được (OS có 1 số hàm handler xử lý cho signal đó, phải dùng những hàm này để xử lý cho signal)
+		<br>với signal ignore được thường cũng lập trình được hàm handler cho signal đó
 
-.có 4 loại signal
-	signal có thể ignore (ex: tổ hợp phím Ctrl+C)
-	signal không thể ignore (ex: chia cho "0", truy cập con trỏ NULL, ghi vào 1 file invalid)
-	signal có thể chủ động điều khiển được (có thể viết 1 hàm handler cho nó, rồi đăng ký với OS)
-	signal không thể chủ động điều khiển được (OS có 1 số hàm handler xử lý cho signal đó, phải dùng những hàm này để xử lý cho signal)
-		//với signal ignore được thường cũng lập trình được hàm handler cho signal đó
-
-.signal table
+- signal table
 	khi khởi tạo process, OS đính kèm mỗi process với 1 bảng signal table
 	là 1 mảng 1 chiều có 32 cell, chứa con trỏ hàm để trỏ đến hàm handler xử lý cho signal đó
 	khi mới khởi tạo, tất cả các signal handler đều là default handler
@@ -344,7 +342,6 @@ chỉ 1 vài cơ chế IPC có thể giao tiếp giữa user space và kernel sp
 		 -ghi lại vào file 2 giá trị: biến counter mới + PID của process hiện tại
 		 -sau khi ghi xong: dùng signal để thông báo cho process còn lại
 		 -process còn lại nhận được signal -> mở file lên -> đọc biến counter -> ghi giá trị mới..
-```
 
 ## 2. SHARED MEMORY
 ```text
