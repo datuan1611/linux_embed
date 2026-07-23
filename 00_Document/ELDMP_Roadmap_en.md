@@ -138,6 +138,7 @@ The roadmap is split into two tracks:
         |        MCU (STM32H743ZI)          |
         |  Bare-metal / FreeRTOS            |
         |  Sensors / Motor / Control Loop   |
+        |  Embedded GUI (LVGL)              |
         |  Protocol: heartbeat, CRC,        |
         |   retry, timeout, versioning      |
         +-----------------------------------+
@@ -155,7 +156,7 @@ The roadmap is split into two tracks:
 | Middleware (Config, Logger, IPC, Storage, Security) | Cross-cutting infrastructure | Written once, reused by every service, independently testable |
 | Services (Device, Health, Network, OTA, Diagnostic, Watchdog) | Business logic | Each service is a small, independently deployable systemd unit |
 | CLI / REST / WebUI | External interface | Kept thin; all logic lives in Services |
-| MCU firmware | Deterministic, real-time control | Runs where Linux cannot guarantee real-time behavior |
+| MCU firmware | Deterministic, real-time control, and the embedded GUI | Runs where Linux cannot guarantee real-time behavior, and where the physical display lives |
 | Linux↔MCU protocol | Reliable inter-processor communication | The most senior-level skill in the project: designing, not just using, a protocol |
 
 ---
@@ -178,7 +179,7 @@ eldmp/
 │   ├── monitor/
 │   ├── ipc/
 │   ├── driver/             # kernel modules (from Sprint 3)
-│   ├── mcu/                 # STM32 firmware (from Sprint 10)
+│   ├── mcu/                 # STM32 firmware + LVGL UI (from Sprint 10)
 │   ├── watchdog/
 │   └── app/
 ├── tests/
@@ -236,6 +237,7 @@ tagged until the full regression suite passes.
 | Foundation | Ubuntu laptop or VM | Primary dev environment | Sprint 0 | — (existing) |
 | Board | BeagleBone Black Rev C | Embedded Linux target | Sprint 3 | $ |
 | MCU | STM32 Nucleo-H743ZI | Real-time companion | Sprint 10–11 | $ |
+| Display | Small SPI/parallel LCD module (LVGL-compatible) | Embedded GUI target | Sprint 10 | $ |
 | Networking | USB-Ethernet adapter or small switch | Test bed | Sprint 12 (only if needed) | $ |
 | Industrial SoC | NXP i.MX93 | Extension Track target | V6.0+ | $$–$$$ |
 
@@ -244,9 +246,10 @@ industrial/AI-class eval kit. Prices vary by region and time — treat
 tiers as relative planning guidance, not quotes.
 
 **Confirmed hardware path:** BeagleBone Black Rev C for the Core Track,
-STM32 Nucleo-H743ZI for the MCU side, then NXP i.MX93 as the Extension
-Track industrial SoC target. No alternative boards are needed at any
-stage — each is purchased only when its sprint arrives (Principle 4).
+STM32 Nucleo-H743ZI plus a small LCD module for the MCU and embedded-GUI
+side, then NXP i.MX93 as the Extension Track industrial SoC target. No
+alternative boards are needed at any stage — each is purchased only when
+its sprint arrives (Principle 4).
 
 ---
 
@@ -271,14 +274,21 @@ stage — each is purchased only when its sprint arrives (Principle 4).
 | *Mastering Embedded Linux Programming* | Chris Simmonds | Sprint 9 |
 | *Embedded Linux Systems with the Yocto Project* + Bootlin Labs | Rudolf J. Streif / Bootlin | Sprint 9 |
 
-### 8.3 Networking & Security
+### 8.3 MCU, FreeRTOS & Embedded GUI
+
+| Resource | Source | Used for |
+|---|---|---|
+| FreeRTOS official documentation and kernel source | FreeRTOS.org | Sprint 10 |
+| LVGL documentation, porting guide, and example widgets | LVGL project | Sprint 10 |
+
+### 8.4 Networking & Security
 
 | Resource | Author | Used for |
 |---|---|---|
 | *Beej's Guide to Network Programming* | Brian "Beej" Hall | Sprint 12 |
 | OpenSSL documentation | OpenSSL project | Sprint 14 |
 
-### 8.4 Extension Track only
+### 8.5 Extension Track only
 
 *Systems Performance* and *BPF Performance Tools* (Brendan Gregg) for
 V4.0; OP-TEE and Trusted Firmware-A documentation for V5.0;
@@ -417,16 +427,17 @@ service architecture. Full release checklist applies (Section 10).
 
 ---
 
-### Sprint 10 — MCU Bring-up
-- **Goal:** establish the MCU side independently before connecting it to Linux.
-- **Duration:** ~4–6 weeks | **Prerequisites:** V1.5; STM32 Nucleo-H743ZI acquired
-- **Study:** UART, SPI, I2C, CAN, DMA, FreeRTOS basics
-- **Reading:** the STM32 HAL driver source for the peripherals in use, and the FreeRTOS scheduler source
-- **Lab (throwaway):** blink/read a single sensor using vendor example code first, to isolate toolchain/board issues from your own logic
-- **Build:** sensor read + motor/PWM control loop on the MCU alone, communicating with a PC over UART only
+### Sprint 10 — MCU Bring-up & Embedded GUI (LVGL)
+- **Goal:** establish the MCU side independently — sensor/control logic plus a basic embedded GUI — before connecting it to Linux.
+- **Duration:** ~5–7 weeks | **Prerequisites:** V1.5; STM32 Nucleo-H743ZI and a small SPI/parallel LCD module acquired
+- **Study:** UART, SPI, I2C, CAN, DMA, FreeRTOS basics; LVGL basics (widgets, event loop, display/input driver interface)
+- **Reading:** the STM32 HAL driver source for the peripherals in use, the FreeRTOS scheduler source, and LVGL's own display/input driver porting guide to see how a production-grade embedded GUI library expects to be integrated
+- **Lab (throwaway):** blink/read a single sensor using vendor example code first, to isolate toolchain/board issues from your own logic; separately, run one of LVGL's built-in demo widgets on the display before wiring in real data
+- **Build:** sensor read + motor/PWM control loop on the MCU, communicating with a PC over UART; sensor data also rendered live on an LVGL-based UI on the display — the same stack commonly used for automotive instrument-cluster/infotainment and appliance HMI panels
 - **Definition of Done (specific):**
   - [ ] Sensor readings correct and stable over time
   - [ ] Control loop runs at a deterministic, measured rate
+  - [ ] LVGL UI updates live from real sensor data without visible tearing or frame drops
 
 ### Sprint 11 — Linux ↔ MCU Protocol
 - **Goal:** design and implement a real, reliable communication protocol between the two processors.
@@ -520,11 +531,11 @@ for version milestones.
 | 7 | 2 weeks | ~27 weeks | — |
 | 8 | 2–3 weeks | ~30 weeks | **V1.0** |
 | 9 | 6–8 weeks | ~38 weeks | **V1.5** |
-| 10 | 4–6 weeks | ~43 weeks | — |
-| 11 | 8–10 weeks | ~52 weeks | **V2.0** |
-| 12 | 4–6 weeks | ~57 weeks | **V2.5** |
-| 13 | 4–6 weeks | ~62 weeks | **V3.0** |
-| 14 | 4–6 weeks | ~67 weeks | **V3.5 — Core Track complete** |
+| 10 | 5–7 weeks | ~44 weeks | — |
+| 11 | 8–10 weeks | ~53 weeks | **V2.0** |
+| 12 | 4–6 weeks | ~58 weeks | **V2.5** |
+| 13 | 4–6 weeks | ~63 weeks | **V3.0** |
+| 14 | 4–6 weeks | ~68 weeks | **V3.5 — Core Track complete** |
 
 **Total Core Track duration: approximately 15–17 months** at the
 baseline part-time pace. The highest-value, most differentiated skill —
@@ -568,10 +579,10 @@ matters for a portfolio, and how to talk about it in an interview.
 |---|---|---|---|---|
 | **V1.0** | 30 | Kernel driver + Device Tree, D-Bus IPC, systemd, watchdog supervision, modern C++ | First release combining kernel-space and user-space work — the strongest possible "early" checkpoint if a job search starts before the roadmap finishes | "I built a multi-service embedded platform where a custom kernel driver exposes real hardware data through D-Bus services, managed by systemd with an additional application-level watchdog." |
 | **V1.5** | 38 | Buildroot, Yocto, custom rootfs, cross-compilation | Can build and boot a fully custom embedded Linux image from scratch | "I built and booted a custom embedded Linux image using both Buildroot and Yocto, understanding every layer from bootloader to root filesystem." |
-| **V2.0** | 52 | MCU firmware (FreeRTOS), custom Linux↔MCU protocol (CRC/retry/versioning) | The strongest differentiator in the project — a protocol that was designed and fault-tested, not just used | "I designed and implemented a fault-tolerant protocol between Linux and an MCU, and validated it against real link failures, not just the happy path." |
-| **V2.5** | 57 | TCP/IP, MQTT | Platform is network-connected and remotely observable | "Device health and status are published to a remote broker in real time, with automatic reconnection." |
-| **V3.0** | 62 | OTA lifecycle (SWUpdate/RAUC) | Behaves like a real commercial IoT/industrial product | "Implemented an OTA pipeline that rejects corrupted packages before installation." |
-| **V3.5** | 67 | TLS, signed updates | Portfolio complete — defensible for Senior Embedded Linux Engineer interviews | "The full platform is encrypted end-to-end and update-signed." |
+| **V2.0** | 53 | MCU firmware (FreeRTOS), embedded GUI (LVGL), custom Linux↔MCU protocol (CRC/retry/versioning) | The strongest differentiator in the project — a protocol that was designed and fault-tested, not just used, plus a real embedded GUI on the MCU side | "I designed and implemented a fault-tolerant protocol between Linux and an MCU, validated it against real link failures, and the MCU side runs a live LVGL-based UI rendering sensor data in real time — the same stack used for automotive instrument clusters and appliance HMI panels." |
+| **V2.5** | 58 | TCP/IP, MQTT | Platform is network-connected and remotely observable | "Device health and status are published to a remote broker in real time, with automatic reconnection." |
+| **V3.0** | 63 | OTA lifecycle (SWUpdate/RAUC) | Behaves like a real commercial IoT/industrial product | "Implemented an OTA pipeline that rejects corrupted packages before installation." |
+| **V3.5** | 68 | TLS, signed updates | Portfolio complete — defensible for Senior Embedded Linux Engineer interviews | "The full platform is encrypted end-to-end and update-signed." |
 
 Each talking point is deliberately a specific, falsifiable claim — the
 kind an interviewer can ask a follow-up question about — not a vague
@@ -667,6 +678,7 @@ risk and mitigation is enough.
 - **HAL (Hardware Abstraction Layer):** a software layer presenting a consistent API regardless of underlying hardware.
 - **HIL (Hardware-in-the-Loop) testing:** testing involving real physical hardware rather than simulation.
 - **IPC (Inter-Process Communication):** mechanisms allowing separate processes to exchange data.
+- **LVGL (Light and Versatile Graphics Library):** an open-source, lightweight embedded GUI library for MCUs and MPUs, widely used for HMI/display work in automotive, industrial, and consumer devices.
 - **MQTT:** a lightweight publish/subscribe messaging protocol common in IoT systems.
 - **OTA (Over-the-Air update):** remotely updating device firmware/software without physical access.
 - **RAUC / SWUpdate:** open-source frameworks for managing embedded Linux OTA updates, including rollback.

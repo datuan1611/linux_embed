@@ -142,6 +142,7 @@ Roadmap được chia thành hai track:
         |        MCU (STM32H743ZI)          |
         |  Bare-metal / FreeRTOS            |
         |  Sensors / Motor / Control Loop   |
+        |  Embedded GUI (LVGL)              |
         |  Protocol: heartbeat, CRC,        |
         |   retry, timeout, versioning      |
         +-----------------------------------+
@@ -159,7 +160,7 @@ Roadmap được chia thành hai track:
 | Middleware (Config, Logger, IPC, Storage, Security) | Hạ tầng dùng chung xuyên suốt | Viết một lần, tái sử dụng cho mọi service, kiểm thử độc lập được |
 | Services (Device, Health, Network, OTA, Diagnostic, Watchdog) | Logic nghiệp vụ | Mỗi service là một systemd unit nhỏ, triển khai độc lập |
 | CLI / REST / WebUI | Giao diện bên ngoài | Giữ mỏng; toàn bộ logic thật nằm ở Services |
-| MCU firmware | Điều khiển thời gian thực, xác định | Chạy ở nơi Linux không thể đảm bảo hành vi thời gian thực |
+| MCU firmware | Điều khiển thời gian thực, xác định, và giao diện đồ hoạ nhúng | Chạy ở nơi Linux không thể đảm bảo hành vi thời gian thực, và nơi màn hình vật lý được gắn |
 | Linux↔MCU protocol | Giao tiếp đáng tin cậy giữa hai bộ xử lý | Kỹ năng cấp senior nhất trong dự án: thiết kế protocol, không chỉ sử dụng nó |
 
 ---
@@ -182,7 +183,7 @@ eldmp/
 │   ├── monitor/
 │   ├── ipc/
 │   ├── driver/             # kernel module (từ Sprint 3)
-│   ├── mcu/                 # firmware STM32 (từ Sprint 10)
+│   ├── mcu/                 # firmware STM32 + UI LVGL (từ Sprint 10)
 │   ├── watchdog/
 │   └── app/
 ├── tests/
@@ -240,6 +241,7 @@ tích hợp và câu chuyện "bức tranh tổng thể".
 | Nền tảng | Laptop Ubuntu hoặc VM | Môi trường phát triển chính | Sprint 0 | — (đã có sẵn) |
 | Board | BeagleBone Black Rev C | Mục tiêu Embedded Linux | Sprint 3 | $ |
 | MCU | STM32 Nucleo-H743ZI | Bộ đồng hành thời gian thực | Sprint 10–11 | $ |
+| Màn hình | Module LCD SPI/parallel nhỏ (tương thích LVGL) | Mục tiêu GUI nhúng | Sprint 10 | $ |
 | Networking | Adapter USB-Ethernet hoặc switch nhỏ | Môi trường test mạng | Sprint 12 (chỉ khi cần) | $ |
 | SoC công nghiệp | NXP i.MX93 | Mục tiêu của Extension Track | V6.0+ | $$–$$$ |
 
@@ -248,10 +250,10 @@ tích hợp và câu chuyện "bức tranh tổng thể".
 thời gian — xem các mức này là định hướng tương đối, không phải báo giá.
 
 **Lộ trình phần cứng đã xác định:** BeagleBone Black Rev C cho Core
-Track, STM32 Nucleo-H743ZI cho phía MCU, sau đó NXP i.MX93 làm mục tiêu
-SoC công nghiệp cho Extension Track. Không cần board thay thế nào ở bất
-kỳ giai đoạn nào — mỗi loại chỉ được mua khi đến đúng sprint cần nó
-(Nguyên tắc 4).
+Track, STM32 Nucleo-H743ZI cùng một module LCD nhỏ cho phía MCU và GUI
+nhúng, sau đó NXP i.MX93 làm mục tiêu SoC công nghiệp cho Extension
+Track. Không cần board thay thế nào ở bất kỳ giai đoạn nào — mỗi loại
+chỉ được mua khi đến đúng sprint cần nó (Nguyên tắc 4).
 
 ---
 
@@ -276,14 +278,21 @@ kỳ giai đoạn nào — mỗi loại chỉ được mua khi đến đúng spr
 | *Mastering Embedded Linux Programming* | Chris Simmonds | Sprint 9 |
 | *Embedded Linux Systems with the Yocto Project* + Bootlin Labs | Rudolf J. Streif / Bootlin | Sprint 9 |
 
-### 8.3 Networking & Security
+### 8.3 MCU, FreeRTOS & GUI Nhúng
+
+| Tài liệu | Nguồn | Dùng cho |
+|---|---|---|
+| Tài liệu chính thức và source kernel của FreeRTOS | FreeRTOS.org | Sprint 10 |
+| Tài liệu, hướng dẫn porting, và ví dụ widget của LVGL | Dự án LVGL | Sprint 10 |
+
+### 8.4 Networking & Security
 
 | Tài liệu | Tác giả | Dùng cho |
 |---|---|---|
 | *Beej's Guide to Network Programming* | Brian "Beej" Hall | Sprint 12 |
 | Tài liệu OpenSSL | Dự án OpenSSL | Sprint 14 |
 
-### 8.4 Chỉ Dành Cho Extension Track
+### 8.5 Chỉ Dành Cho Extension Track
 
 *Systems Performance* và *BPF Performance Tools* (Brendan Gregg) cho
 V4.0; tài liệu OP-TEE và Trusted Firmware-A cho V5.0;
@@ -422,16 +431,17 @@ user-space đầy đủ. Checklist phát hành đầy đủ được áp dụng 
 
 ---
 
-### Sprint 10 — MCU Bring-up
-- **Mục tiêu:** thiết lập phía MCU độc lập trước khi kết nối với Linux.
-- **Thời lượng:** ~4–6 tuần | **Yêu cầu trước:** V1.5; đã có STM32 Nucleo-H743ZI
-- **Study:** UART, SPI, I2C, CAN, DMA, kiến thức nền FreeRTOS
-- **Reading:** source của STM32 HAL driver cho các peripheral đang dùng, và source scheduler của FreeRTOS
-- **Lab (thử nghiệm):** chớp đèn/đọc một cảm biến bằng code ví dụ của vendor trước, để tách riêng vấn đề toolchain/board khỏi logic của chính bạn
-- **Build:** đọc cảm biến + vòng lặp điều khiển motor/PWM chỉ trên MCU, giao tiếp với PC qua UART
+### Sprint 10 — MCU Bring-up & GUI Nhúng (LVGL)
+- **Mục tiêu:** thiết lập phía MCU độc lập — logic cảm biến/điều khiển cộng với một GUI nhúng cơ bản — trước khi kết nối với Linux.
+- **Thời lượng:** ~5–7 tuần | **Yêu cầu trước:** V1.5; đã có STM32 Nucleo-H743ZI và một module LCD SPI/parallel nhỏ
+- **Study:** UART, SPI, I2C, CAN, DMA, kiến thức nền FreeRTOS; kiến thức nền LVGL (widget, event loop, interface driver màn hình/input)
+- **Reading:** source của STM32 HAL driver cho các peripheral đang dùng, source scheduler của FreeRTOS, và hướng dẫn porting driver màn hình/input của chính LVGL để xem một thư viện GUI nhúng cấp sản xuất mong đợi được tích hợp ra sao
+- **Lab (thử nghiệm):** chớp đèn/đọc một cảm biến bằng code ví dụ của vendor trước, để tách riêng vấn đề toolchain/board khỏi logic của chính bạn; riêng biệt, chạy thử một demo widget có sẵn của LVGL trên màn hình trước khi gắn dữ liệu thật vào
+- **Build:** đọc cảm biến + vòng lặp điều khiển motor/PWM trên MCU, giao tiếp với PC qua UART; dữ liệu cảm biến cũng được hiển thị trực tiếp lên một UI dựa trên LVGL trên màn hình — đúng tech stack thường dùng cho cụm đồng hồ/infotainment ô tô và panel HMI thiết bị gia dụng
 - **Definition of Done (riêng):**
   - [ ] Dữ liệu cảm biến đúng và ổn định theo thời gian
   - [ ] Vòng lặp điều khiển chạy ở tốc độ xác định, đã đo được
+  - [ ] UI LVGL cập nhật trực tiếp từ dữ liệu cảm biến thật, không bị xé hình (tearing) hay giật khung hình rõ rệt
 
 ### Sprint 11 — Linux ↔ MCU Protocol
 - **Mục tiêu:** thiết kế và triển khai một protocol giao tiếp thật, đáng tin cậy giữa hai bộ xử lý.
@@ -525,11 +535,11 @@ milestone.
 | 7 | 2 tuần | ~27 tuần | — |
 | 8 | 2–3 tuần | ~30 tuần | **V1.0** |
 | 9 | 6–8 tuần | ~38 tuần | **V1.5** |
-| 10 | 4–6 tuần | ~43 tuần | — |
-| 11 | 8–10 tuần | ~52 tuần | **V2.0** |
-| 12 | 4–6 tuần | ~57 tuần | **V2.5** |
-| 13 | 4–6 tuần | ~62 tuần | **V3.0** |
-| 14 | 4–6 tuần | ~67 tuần | **V3.5 — Core Track hoàn thành** |
+| 10 | 5–7 tuần | ~44 tuần | — |
+| 11 | 8–10 tuần | ~53 tuần | **V2.0** |
+| 12 | 4–6 tuần | ~58 tuần | **V2.5** |
+| 13 | 4–6 tuần | ~63 tuần | **V3.0** |
+| 14 | 4–6 tuần | ~68 tuần | **V3.5 — Core Track hoàn thành** |
 
 **Tổng thời lượng Core Track: khoảng 15–17 tháng** với nhịp độ bán thời
 gian cơ sở. Kỹ năng khác biệt, giá trị cao nhất — công việc kernel/driver
@@ -573,10 +583,10 @@ vì sao nó quan trọng với portfolio, và cách trình bày nó trong phỏn
 |---|---|---|---|---|
 | **V1.0** | 30 | Kernel driver + Device Tree, D-Bus IPC, systemd, giám sát bằng watchdog, modern C++ | Bản release đầu tiên kết hợp cả kernel-space lẫn user-space — checkpoint "sớm" mạnh nhất nếu việc tìm việc bắt đầu trước khi roadmap hoàn tất | "Tôi đã xây dựng một platform nhúng nhiều service, trong đó một kernel driver tuỳ chỉnh expose dữ liệu hardware thật qua các D-Bus service, được quản lý bởi systemd cùng một watchdog ở cấp ứng dụng." |
 | **V1.5** | 38 | Buildroot, Yocto, rootfs tuỳ chỉnh, cross-compilation | Có thể build và boot một image embedded Linux hoàn toàn tuỳ chỉnh từ đầu | "Tôi đã build và boot một image embedded Linux tuỳ chỉnh bằng cả Buildroot lẫn Yocto, hiểu rõ từng lớp từ bootloader đến root filesystem." |
-| **V2.0** | 52 | Firmware MCU (FreeRTOS), protocol Linux↔MCU tuỳ chỉnh (CRC/retry/versioning) | Điểm khác biệt mạnh nhất trong dự án — một protocol được thiết kế và kiểm thử lỗi thật, không chỉ đơn thuần sử dụng | "Tôi đã thiết kế và triển khai một protocol chịu lỗi giữa Linux và MCU, và kiểm chứng nó với các lỗi kết nối thật, không chỉ trường hợp lý tưởng." |
-| **V2.5** | 57 | TCP/IP, MQTT | Platform đã kết nối mạng và giám sát được từ xa | "Trạng thái/health của thiết bị được publish tới một broker từ xa theo thời gian thực, với khả năng tự kết nối lại." |
-| **V3.0** | 62 | Vòng đời OTA (SWUpdate/RAUC) | Hoạt động như một sản phẩm IoT/công nghiệp thương mại thật | "Đã triển khai một pipeline OTA từ chối các package bị hỏng trước khi cài đặt." |
-| **V3.5** | 67 | TLS, update đã ký | Portfolio hoàn chỉnh — đủ sức thuyết phục cho phỏng vấn Senior Embedded Linux Engineer | "Toàn bộ platform được mã hoá đầu-cuối và update được ký số." |
+| **V2.0** | 53 | Firmware MCU (FreeRTOS), GUI nhúng (LVGL), protocol Linux↔MCU tuỳ chỉnh (CRC/retry/versioning) | Điểm khác biệt mạnh nhất trong dự án — một protocol được thiết kế và kiểm thử lỗi thật, không chỉ đơn thuần sử dụng, cộng thêm một GUI nhúng thật ở phía MCU | "Tôi đã thiết kế và triển khai một protocol chịu lỗi giữa Linux và MCU, kiểm chứng nó với các lỗi kết nối thật, và phía MCU chạy một UI dựa trên LVGL hiển thị dữ liệu cảm biến theo thời gian thực — đúng tech stack dùng cho cụm đồng hồ ô tô và panel HMI thiết bị gia dụng." |
+| **V2.5** | 58 | TCP/IP, MQTT | Platform đã kết nối mạng và giám sát được từ xa | "Trạng thái/health của thiết bị được publish tới một broker từ xa theo thời gian thực, với khả năng tự kết nối lại." |
+| **V3.0** | 63 | Vòng đời OTA (SWUpdate/RAUC) | Hoạt động như một sản phẩm IoT/công nghiệp thương mại thật | "Đã triển khai một pipeline OTA từ chối các package bị hỏng trước khi cài đặt." |
+| **V3.5** | 68 | TLS, update đã ký | Portfolio hoàn chỉnh — đủ sức thuyết phục cho phỏng vấn Senior Embedded Linux Engineer | "Toàn bộ platform được mã hoá đầu-cuối và update được ký số." |
 
 Mỗi điểm nói trong phỏng vấn đều được cố tình diễn đạt thành một tuyên bố
 cụ thể, có thể kiểm chứng — dạng câu mà người phỏng vấn có thể hỏi tiếp —
@@ -672,6 +682,7 @@ sách bao gồm cả rủi ro lẫn cách khắc phục là đủ.
 - **HAL (Hardware Abstraction Layer):** một lớp phần mềm cung cấp API nhất quán bất kể hardware bên dưới là gì.
 - **HIL (Hardware-in-the-Loop) testing:** kiểm thử có sự tham gia của hardware vật lý thật, không phải mô phỏng.
 - **IPC (Inter-Process Communication):** các cơ chế cho phép các process riêng biệt trao đổi dữ liệu.
+- **LVGL (Light and Versatile Graphics Library):** một thư viện GUI nhúng mã nguồn mở, nhẹ, dùng cho MCU và MPU, được dùng rộng rãi cho các ứng dụng HMI/màn hình trong automotive, công nghiệp, và thiết bị tiêu dùng.
 - **MQTT:** một giao thức messaging publish/subscribe nhẹ, phổ biến trong hệ thống IoT.
 - **OTA (Over-the-Air update):** cập nhật firmware/phần mềm thiết bị từ xa mà không cần truy cập vật lý.
 - **RAUC / SWUpdate:** các framework mã nguồn mở để quản lý update OTA cho embedded Linux, bao gồm cả rollback.
