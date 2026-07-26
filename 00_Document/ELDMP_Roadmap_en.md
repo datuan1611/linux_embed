@@ -31,8 +31,8 @@
 self-directed engineering project built to develop deep, verifiable
 competency in Embedded Linux system engineering — spanning user-space
 service architecture, Linux kernel internals, embedded board bring-up,
-MCU firmware, and secure device communication — while simultaneously
-producing a public, versioned software portfolio.
+MCU/RTOS firmware, and secure device communication — while
+simultaneously producing a public, versioned software portfolio.
 
 The project follows a **project-driven learning model**: every unit of
 study is paired with a concrete, shippable piece of the platform. Nothing
@@ -43,12 +43,19 @@ demoable system state.
 **Design highlights.** Three choices shape this roadmap more than any
 other:
 
-1. **Kernel-space work starts early (Sprint 3).** A custom driver and
-   Device Tree overlay — the first strong, differentiated skill — is
-   demonstrable by roughly month 3–4, and is already part of the V1.0
-   release rather than arriving later. The earlier real kernel-level
-   work can be shown, the less a stalled job search or life event can
-   derail the value of the portfolio already built.
+1. **Kernel-space work starts immediately after the foundation sprints
+   (Sprint 3), with a short hardware warm-up built directly into it.**
+   Before touching any kernel module code, Sprint 3 opens with a brief
+   user-space exercise — accessing GPIO registers directly through
+   `/dev/mem` and `mmap()` — to build register-level intuition on the
+   same board (BeagleBone Black) the kernel driver work uses, without
+   duplicating what the kernel API itself teaches and without requiring
+   the MCU board any earlier than necessary. The full MCU/FreeRTOS work
+   (Sprint 10) is deliberately deferred until after the entire Linux
+   track — kernel driver, service platform, and a custom Buildroot/Yocto
+   image — is complete. This roadmap treats Embedded Linux as the
+   mandatory, senior-differentiating skill and sequences everything to
+   protect uninterrupted progress toward it.
 2. **Process is kept deliberately light.** Every checklist, template, or
    review step in this document exists only because it demonstrably
    improves learning outcome or portfolio quality for a one-person
@@ -138,7 +145,7 @@ The roadmap is split into two tracks:
         |        MCU (STM32H743ZI)          |
         |  Bare-metal / FreeRTOS            |
         |  Sensors / Motor / Control Loop   |
-        |  Embedded GUI (LVGL)              |
+        |  Embedded GUI (LVGL)*             |
         |  Protocol: heartbeat, CRC,        |
         |   retry, timeout, versioning      |
         +-----------------------------------+
@@ -156,7 +163,7 @@ The roadmap is split into two tracks:
 | Middleware (Config, Logger, IPC, Storage, Security) | Cross-cutting infrastructure | Written once, reused by every service, independently testable |
 | Services (Device, Health, Network, OTA, Diagnostic, Watchdog) | Business logic | Each service is a small, independently deployable systemd unit |
 | CLI / REST / WebUI | External interface | Kept thin; all logic lives in Services |
-| MCU firmware | Deterministic, real-time control, and the embedded GUI | Runs where Linux cannot guarantee real-time behavior, and where the physical display lives |
+| MCU firmware | Deterministic, real-time control | Runs where Linux cannot guarantee real-time behavior |
 | Linux↔MCU protocol | Reliable inter-processor communication | The most senior-level skill in the project: designing, not just using, a protocol |
 
 ---
@@ -179,7 +186,7 @@ eldmp/
 │   ├── monitor/
 │   ├── ipc/
 │   ├── driver/             # kernel modules (from Sprint 3)
-│   ├── mcu/                 # STM32 firmware + LVGL UI (from Sprint 10)
+│   ├── mcu/                 # STM32 firmware (from Sprint 10)
 │   ├── watchdog/
 │   └── app/
 ├── tests/
@@ -207,7 +214,8 @@ and linked):
 |---|---|---|
 | `eldmp-kernel-driver` | Sprint 3 | A focused, ~500-line driver + DT overlay is far more legible on its own than buried inside a large service codebase |
 | `eldmp-yocto-layer` | Sprint 9 | A custom Yocto meta-layer is a recognizable, self-contained artifact recruiters in this space specifically look for |
-| `eldmp-linux-mcu-protocol` | Sprint 10–11 | The single strongest piece of work in the whole project; it should be one click away, not several folders deep |
+| `eldmp-mcu-firmware` | Sprint 10 | A focused FreeRTOS firmware repo, structured with proper task/queue/semaphore patterns — directly showable for roles centered on MCU/RTOS work |
+| `eldmp-linux-mcu-protocol` | Sprint 11 | The single strongest piece of work in the whole project; it should be one click away, not several folders deep |
 
 Everything else stays inside the `eldmp` umbrella repo, which functions
 as the integration point and the "big picture" story.
@@ -221,7 +229,7 @@ as the integration point and the "big picture" story.
 | Unit tests | Single module in isolation | Sprint 1 | GoogleTest or Catch2 | No hardware or live D-Bus dependency |
 | Integration tests | Two or more services over IPC | Sprint 6 | Same framework, running D-Bus session | Manual, scripted verification is acceptable here. Building a full automated D-Bus mocking harness is not required for the Core Track — it is a genuinely painful, low-market-value investment at this stage. Automate it later only if it stops being tedious to check by hand. |
 | System / boot tests | Full image boots, all services start | Sprint 3, expanded Sprint 9 | Manual boot + log inspection | Formal scripted boot testing is Extension Track (V4.0) material |
-| Hardware-in-the-loop (HIL) | Real MCU + real board over the physical link | Sprint 10–11 | Manual fault injection (cable unplug, corrupted payload) | This is where rigor matters most — see Sprint 11 Definition of Done |
+| Hardware-in-the-loop (HIL) | Real MCU + real board over the physical link | Sprint 11 | Manual fault injection (cable unplug, corrupted payload) | This is where rigor matters most — see Sprint 11 Definition of Done |
 | Regression tests | Re-run of previous sprints' tests together | Every version milestone | Aggregated local run | Required before every tag |
 
 **Convention:** test location mirrors source location
@@ -236,8 +244,7 @@ tagged until the full regression suite passes.
 |---|---|---|---|---|
 | Foundation | Ubuntu laptop or VM | Primary dev environment | Sprint 0 | — (existing) |
 | Board | BeagleBone Black Rev C | Embedded Linux target | Sprint 3 | $ |
-| MCU | STM32 Nucleo-H743ZI | Real-time companion | Sprint 10–11 | $ |
-| Display | Small SPI/parallel LCD module (LVGL-compatible) | Embedded GUI target | Sprint 10 | $ |
+| MCU | STM32 Nucleo-H743ZI | Real-time companion | Sprint 10 | $ |
 | Networking | USB-Ethernet adapter or small switch | Test bed | Sprint 12 (only if needed) | $ |
 | Industrial SoC | NXP i.MX93 | Extension Track target | V6.0+ | $$–$$$ |
 
@@ -245,11 +252,13 @@ tagged until the full regression suite passes.
 industrial/AI-class eval kit. Prices vary by region and time — treat
 tiers as relative planning guidance, not quotes.
 
-**Confirmed hardware path:** BeagleBone Black Rev C for the Core Track,
-STM32 Nucleo-H743ZI plus a small LCD module for the MCU and embedded-GUI
-side, then NXP i.MX93 as the Extension Track industrial SoC target. No
-alternative boards are needed at any stage — each is purchased only when
-its sprint arrives (Principle 4).
+**Confirmed hardware path:** BeagleBone Black Rev C for the Core Track's
+Linux/kernel work (Sprint 3), then STM32 Nucleo-H743ZI for the MCU work
+(Sprint 10), then NXP i.MX93 as the Extension Track industrial SoC
+target. Each board is purchased right when its sprint needs it — no
+board sits idle waiting to be used (Principle 4). A small LCD display
+module is only needed if the optional embedded-GUI (LVGL) extension is
+pursued later (Section 12) — it is not part of the Core Track.
 
 ---
 
@@ -270,16 +279,17 @@ its sprint arrives (Principle 4).
 
 | Resource | Source | Used for |
 |---|---|---|
+| *Exploring BeagleBone* | Derek Molloy | Sprint 3 — specifically covers the progression from userspace `/dev/mem` register access to writing real kernel drivers on this exact board |
 | Linux Kernel Labs | Linux Foundation / kernel community | Sprint 3 |
 | *Mastering Embedded Linux Programming* | Chris Simmonds | Sprint 9 |
 | *Embedded Linux Systems with the Yocto Project* + Bootlin Labs | Rudolf J. Streif / Bootlin | Sprint 9 |
 
-### 8.3 MCU, FreeRTOS & Embedded GUI
+### 8.3 MCU & FreeRTOS
 
 | Resource | Source | Used for |
 |---|---|---|
+| STM32 reference manual and HAL driver source | STMicroelectronics | Sprint 10 |
 | FreeRTOS official documentation and kernel source | FreeRTOS.org | Sprint 10 |
-| LVGL documentation, porting guide, and example widgets | LVGL project | Sprint 10 |
 
 ### 8.4 Networking & Security
 
@@ -291,7 +301,8 @@ its sprint arrives (Principle 4).
 ### 8.5 Extension Track only
 
 *Systems Performance* and *BPF Performance Tools* (Brendan Gregg) for
-V4.0; OP-TEE and Trusted Firmware-A documentation for V5.0;
+V4.0; OP-TEE and Trusted Firmware-A documentation for V5.0; LVGL
+documentation and porting guide for V8.0 (embedded GUI, optional);
 *C++ Concurrency in Action* (Anthony Williams) as multi-threading grows
 more complex.
 
@@ -305,12 +316,17 @@ addition to each sprint's specific criteria:**
 - [ ] A technical note (300–600 words: what was learned, what broke, how it was fixed) is written to `notes/`.
 - [ ] At least one piece of real, production source code was read, per that sprint's "Reading" line below — not tutorial code.
 
-**Why kernel work comes before D-Bus/systemd/Watchdog:** writing a
-character driver and a Device Tree overlay has no technical dependency
-on IPC or service management — it only needs Logger and Config to exist
-so results can be recorded. Sequencing it at Sprint 3 gets you onto real
-hardware and into kernel-space within the first few months, without
-breaking any actual prerequisite chain.
+**Why kernel work comes immediately after the foundation sprints, with a
+warm-up built in rather than a separate sprint:** a full MCU/FreeRTOS
+sprint before Sprint 3 would either duplicate what the kernel work
+itself teaches (register/interrupt intuition) or require buying the MCU
+board months before it's needed. Instead, Sprint 3 opens with a short
+user-space register-access exercise on the same board already being
+used for kernel work, then proceeds directly into the kernel driver
+material — no separate sprint, no duplicated content, no early hardware
+purchase, and no added time (it fits inside the sprint's existing
+buffer). The full MCU/FreeRTOS build is deferred to Sprint 10, after the
+entire Linux track is complete.
 
 ---
 
@@ -346,14 +362,16 @@ breaking any actual prerequisite chain.
 ---
 
 ### Sprint 3 — Kernel & Device Tree Fundamentals
-- **Goal:** move from user-space-only competency into real kernel-space work, early.
-- **Duration:** ~8–10 weeks (contingency buffer included — kernel debugging is the least predictable work for a self-taught learner, so this is treated with the same care as the Linux↔MCU protocol sprint)
+- **Goal:** move from user-space-only competency into real kernel-space work, with a short hardware warm-up first to reduce risk.
+- **Duration:** ~8–10 weeks (contingency buffer included — kernel debugging is the least predictable work for a self-taught learner; the warm-up lab below fits inside this buffer and adds no extra time)
 - **Prerequisites:** Sprint 2; BeagleBone Black Rev C acquired
-- **Study:** Linux Kernel Labs — boot process, character device drivers, interrupt handling, Linux Device Model, kernel synchronization
-- **Reading:** one simple character driver from `drivers/char/` in the mainline kernel source, and the BeagleBone Black's own Device Tree source (`am335x-boneblack.dts`) to see how a production board description is structured
-- **Lab (throwaway, not shipped):** follow 2–3 official Linux Kernel Labs exercises exactly as written, on disposable code, before touching the "real" driver — treat these as safe-to-break sandboxes
+- **Study:** register-level I/O concepts (memory-mapped I/O, `/dev/mem`, `mmap()`); then Linux Kernel Labs — boot process, character device drivers, interrupt handling, Linux Device Model, kernel synchronization
+- **Reading:** the BeagleBone Black's AM335x Technical Reference Manual section on GPIO registers; one simple character driver from `drivers/char/` in the mainline kernel source; the BeagleBone Black's own Device Tree source (`am335x-boneblack.dts`)
+- **Lab 0 (throwaway, ~3–5 days, hardware warm-up before any kernel code):** write a small user-space C program that opens `/dev/mem`, `mmap()`s the GPIO register region, and toggles a pin via direct register read/write — no kernel API, no HAL. This builds the bitwise/register intuition the kernel driver needs, on real hardware, without touching kernel code and without needing the MCU board.
+- **Lab (throwaway, kernel-specific):** follow 2–3 official Linux Kernel Labs exercises exactly as written, on disposable code, before touching the "real" driver — treat these as safe-to-break sandboxes
 - **Build (ships in `eldmp-kernel-driver`):** one custom character device driver, one GPIO driver, a Device Tree overlay binding it to real hardware (button/LED)
 - **Definition of Done (specific):**
+  - [ ] Lab 0: GPIO toggled via `/dev/mem` + `mmap()` in user-space, verified on real hardware
   - [ ] Custom driver loads via `insmod` and is visible in `dmesg` without errors
   - [ ] Device Tree overlay correctly binds the driver to real hardware
   - [ ] Interrupt-driven GPIO input verified (not polling)
@@ -405,9 +423,9 @@ breaking any actual prerequisite chain.
 - **Definition of Done (specific):**
   - [ ] A deliberately hung service is detected and restarted within a defined timeout
 
-**→ Release V1.0 — "Kernel-space + user-space platform."** This release
-includes both real driver/Device Tree work and the full user-space
-service architecture. Full release checklist applies (Section 10).
+**→ Release V1.0 — "Portfolio-ready kernel-space + user-space platform."**
+Full release checklist applies (Section 10): architecture diagram, demo
+video, git tag, changelog entry.
 
 ---
 
@@ -427,17 +445,17 @@ service architecture. Full release checklist applies (Section 10).
 
 ---
 
-### Sprint 10 — MCU Bring-up & Embedded GUI (LVGL)
-- **Goal:** establish the MCU side independently — sensor/control logic plus a basic embedded GUI — before connecting it to Linux.
-- **Duration:** ~5–7 weeks | **Prerequisites:** V1.5; STM32 Nucleo-H743ZI and a small SPI/parallel LCD module acquired
-- **Study:** UART, SPI, I2C, CAN, DMA, FreeRTOS basics; LVGL basics (widgets, event loop, display/input driver interface)
-- **Reading:** the STM32 HAL driver source for the peripherals in use, the FreeRTOS scheduler source, and LVGL's own display/input driver porting guide to see how a production-grade embedded GUI library expects to be integrated
-- **Lab (throwaway):** blink/read a single sensor using vendor example code first, to isolate toolchain/board issues from your own logic; separately, run one of LVGL's built-in demo widgets on the display before wiring in real data
-- **Build:** sensor read + motor/PWM control loop on the MCU, communicating with a PC over UART; sensor data also rendered live on an LVGL-based UI on the display — the same stack commonly used for automotive instrument-cluster/infotainment and appliance HMI panels
+### Sprint 10 — MCU Bring-up & FreeRTOS
+- **Goal:** build the full MCU application layer — sensor/control logic using proper FreeRTOS task, queue, and semaphore patterns.
+- **Duration:** ~5–7 weeks | **Prerequisites:** V1.5; STM32 Nucleo-H743ZI acquired
+- **Study:** UART, SPI, I2C, CAN, DMA; FreeRTOS tasks, queues, semaphores/mutexes, timing
+- **Reading:** the STM32 HAL driver source for the peripherals in use, and the FreeRTOS kernel source for task scheduling and queue implementation
+- **Lab (throwaway):** blink/read a single sensor using vendor example code first, to isolate toolchain/board issues from your own logic; separately, a small producer/consumer exercise using a FreeRTOS queue between two tasks, before wiring the real application
+- **Build (ships in `eldmp-mcu-firmware`):** sensor read + motor/PWM control loop on the MCU, structured as separate FreeRTOS tasks synchronized via queues/semaphores (not shared global variables), communicating with a PC over UART
 - **Definition of Done (specific):**
   - [ ] Sensor readings correct and stable over time
   - [ ] Control loop runs at a deterministic, measured rate
-  - [ ] LVGL UI updates live from real sensor data without visible tearing or frame drops
+  - [ ] Tasks are synchronized via FreeRTOS queue/semaphore primitives — verified by a deliberately induced race-condition test that the synchronized version passes and an unsynchronized version would fail
 
 ### Sprint 11 — Linux ↔ MCU Protocol
 - **Goal:** design and implement a real, reliable communication protocol between the two processors.
@@ -524,23 +542,26 @@ for version milestones.
 | 0 | 2 weeks | 2 weeks | — |
 | 1 | 2 weeks | 4 weeks | — |
 | 2 | 2 weeks | 6 weeks | — |
-| 3 | 8–10 weeks | ~15 weeks | *(kernel/driver skill demonstrable here, ~3.5 months)* |
+| 3 (Kernel & DT, incl. warm-up) | 8–10 weeks | ~15 weeks | *(kernel/driver skill demonstrable here, ~3.5 months)* |
 | 4 | 2–3 weeks | ~18 weeks | — |
 | 5 | 2–3 weeks | ~21 weeks | — |
 | 6 | 3–4 weeks | ~25 weeks | — |
 | 7 | 2 weeks | ~27 weeks | — |
 | 8 | 2–3 weeks | ~30 weeks | **V1.0** |
 | 9 | 6–8 weeks | ~38 weeks | **V1.5** |
-| 10 | 5–7 weeks | ~44 weeks | — |
-| 11 | 8–10 weeks | ~53 weeks | **V2.0** |
-| 12 | 4–6 weeks | ~58 weeks | **V2.5** |
-| 13 | 4–6 weeks | ~63 weeks | **V3.0** |
-| 14 | 4–6 weeks | ~68 weeks | **V3.5 — Core Track complete** |
+| 10 (MCU + FreeRTOS) | 5–7 weeks | ~44 weeks | — |
+| 11 (Protocol) | 8–10 weeks | ~53 weeks | **V2.0** |
+| 12 (Networking) | 4–6 weeks | ~58 weeks | **V2.5** |
+| 13 (OTA) | 4–6 weeks | ~63 weeks | **V3.0** |
+| 14 (Security) | 4–6 weeks | ~68 weeks | **V3.5 — Core Track complete** |
 
 **Total Core Track duration: approximately 15–17 months** at the
-baseline part-time pace. The highest-value, most differentiated skill —
-kernel/driver work — becomes demonstrable early, around month ~3.5, well
-before the first version tag.
+baseline part-time pace. Kernel-space work — the strongest, most
+differentiated skill this roadmap protects — is demonstrable by roughly
+month ~3.5, and V1.0 (kernel + full user-space platform) is reached by
+month ~7. The hardware warm-up lab in Sprint 3 and the added FreeRTOS
+synchronization depth in Sprint 10 are absorbed without lengthening the
+roadmap versus a plain kernel-first ordering.
 
 ### 11.2 Pace scaling by weekly time budget
 
@@ -566,7 +587,7 @@ Optional, chosen only after V3.5, based on career direction:
 | V5.0 | Secure Boot & TEE (OP-TEE, TF-A, `dm-verity`, `dm-crypt`, A/B rollback) | Automotive, medical, security-sensitive roles |
 | V6.0 | Industrial SoC Port on NXP i.MX93 — RemoteProc, RPMsg, asymmetric multiprocessing, Time-Sensitive Networking, Real-Time Linux | Robotics or industrial automation roles |
 | V7.0 | REST API / WebUI / Cloud Dashboard | Product-oriented roles |
-| V8.0 | ROS2 / on-device AI inference / GUI | Robotics specialization |
+| V8.0 | ROS2 / on-device AI inference / embedded GUI (LVGL) | Robotics, edge-AI, or automotive/appliance HMI-focused roles — requires a small LCD module not purchased by default (see Section 7) |
 
 ---
 
@@ -577,9 +598,9 @@ matters for a portfolio, and how to talk about it in an interview.
 
 | Milestone | ~Week | Skills gained | Portfolio significance | Interview talking point |
 |---|---|---|---|---|
-| **V1.0** | 30 | Kernel driver + Device Tree, D-Bus IPC, systemd, watchdog supervision, modern C++ | First release combining kernel-space and user-space work — the strongest possible "early" checkpoint if a job search starts before the roadmap finishes | "I built a multi-service embedded platform where a custom kernel driver exposes real hardware data through D-Bus services, managed by systemd with an additional application-level watchdog." |
+| **V1.0** | 30 | Kernel driver + Device Tree, D-Bus IPC, systemd, watchdog supervision, modern C++, register-level I/O | First release combining kernel-space and user-space work — the strongest possible "early" checkpoint if a job search starts before the roadmap finishes | "I built a multi-service embedded platform where a custom kernel driver exposes real hardware data through D-Bus services, managed by systemd with an additional application-level watchdog." |
 | **V1.5** | 38 | Buildroot, Yocto, custom rootfs, cross-compilation | Can build and boot a fully custom embedded Linux image from scratch | "I built and booted a custom embedded Linux image using both Buildroot and Yocto, understanding every layer from bootloader to root filesystem." |
-| **V2.0** | 53 | MCU firmware (FreeRTOS), embedded GUI (LVGL), custom Linux↔MCU protocol (CRC/retry/versioning) | The strongest differentiator in the project — a protocol that was designed and fault-tested, not just used, plus a real embedded GUI on the MCU side | "I designed and implemented a fault-tolerant protocol between Linux and an MCU, validated it against real link failures, and the MCU side runs a live LVGL-based UI rendering sensor data in real time — the same stack used for automotive instrument clusters and appliance HMI panels." |
+| **V2.0** | 53 | Advanced FreeRTOS firmware (tasks/queues/semaphores), custom Linux↔MCU protocol (CRC/retry/versioning) | The strongest differentiator in the project — an MCU firmware built with proper RTOS synchronization, paired with a protocol that was designed and fault-tested, not just used | "I designed and implemented a fault-tolerant protocol between Linux and an MCU — where the MCU side runs its own FreeRTOS tasks synchronized via queues and semaphores — and validated the link against real failures, not just the happy path." |
 | **V2.5** | 58 | TCP/IP, MQTT | Platform is network-connected and remotely observable | "Device health and status are published to a remote broker in real time, with automatic reconnection." |
 | **V3.0** | 63 | OTA lifecycle (SWUpdate/RAUC) | Behaves like a real commercial IoT/industrial product | "Implemented an OTA pipeline that rejects corrupted packages before installation." |
 | **V3.5** | 68 | TLS, signed updates | Portfolio complete — defensible for Senior Embedded Linux Engineer interviews | "The full platform is encrypted end-to-end and update-signed." |
@@ -598,16 +619,16 @@ kind an interviewer can ask a follow-up question about — not a vague
 2. Architecture diagram (Section 4.1)
 3. "What this demonstrates" — a short bullet list drawn from Section 13
 4. Current version and what changed most recently
-5. Links to the three standalone spin-out repos (Section 5.3)
+5. Links to the four standalone spin-out repos (Section 5.3)
 6. How to build/run, or where to watch the demo video
 7. Link to this roadmap document
 
-### 14.2 Standalone repo README outline (for the 3 spin-outs)
+### 14.2 Standalone repo README outline (for the 4 spin-outs)
 
-Each of `eldmp-kernel-driver`, `eldmp-yocto-layer`, and
-`eldmp-linux-mcu-protocol` should be readable with zero context from the
-umbrella repo: one-paragraph problem statement, what was built, how to
-run/test it, and one link back to `eldmp` for the bigger picture.
+Each of `eldmp-kernel-driver`, `eldmp-yocto-layer`, `eldmp-mcu-firmware`,
+and `eldmp-linux-mcu-protocol` should be readable with zero context from
+the umbrella repo: one-paragraph problem statement, what was built, how
+to run/test it, and one link back to `eldmp` for the bigger picture.
 
 ---
 
@@ -645,7 +666,7 @@ What this makes easier, what this makes harder, what was given up.
 3. **ADR-0003 — D-Bus for IPC**, instead of raw Unix sockets or shared memory.
 4. **ADR-0004 — A custom, progressively-built protocol (UART→SPI→CAN)** for the Linux↔MCU link, instead of adopting an existing protocol like Modbus directly.
 
-(A fifth, ADR-0005, is added only if and when the i.MX93 port is planned in detail at V6.0.)
+(A fifth, ADR-0005, is added only if and when the i.MX93 port is planned in detail at V6.0. The choice to fold hardware warm-up into Sprint 3 rather than a separate MCU-first sprint is documented in Section 1's Design Highlights rather than as a separate ADR, since it is a roadmap sequencing decision rather than a system architecture decision.)
 
 ---
 
@@ -659,11 +680,12 @@ risk and mitigation is enough.
 | Buying hardware too early | Excitement to "get started" with hardware | Follow Section 7's acquisition timing — hardware bought before its sprint tends to sit unused |
 | Bricking hardware during kernel/driver work | Inevitable when flashing/experimenting at this level | Keep an SD card backup image; treat the board as expendable during Sprint 3 experimentation |
 | Compressing Sprint 3 or Sprint 11 | These are the two least predictable, highest-value sprints | Both already carry explicit contingency buffers — protect them, don't reclaim the buffer for other sprints |
+| Skipping Lab 0 (the `/dev/mem` warm-up) to "save time" | It's tempting to jump straight to kernel modules | Lab 0 is short (3–5 days) and fits inside Sprint 3's existing buffer — skipping it doesn't save meaningful time but does remove the risk-reduction it provides |
 | Scope creep from Extension Track ideas | Secure boot or performance tooling can look more interesting than finishing OTA/TLS | Enforced by Principle 6 — log the idea, don't build it, until V3.5 |
 | Over-investing in D-Bus test automation | Mocking D-Bus is genuinely difficult and low market value at this stage | Manual/scripted verification is explicitly sufficient for Core Track (Section 6) |
 | Writing an ADR for every small decision | Feels rigorous, but creates fatigue and stops being read | Capped at exactly 4 for the Core Track (Section 15) |
 | Documentation debt | Easy to defer "later" | Pre-empted by the Universal Definition of Done (Section 9), which makes the per-sprint note non-optional |
-| Job-search timeline pressure vs. full roadmap length | Real life doesn't wait for V3.5 | V1.0 already includes kernel-space work, so it is a strong standalone checkpoint on its own |
+| Job-search timeline pressure vs. full roadmap length | Real life doesn't wait for V3.5 | V1.0 already includes kernel-space work, so it is a strong standalone checkpoint on its own, reached by month ~7 |
 
 ---
 
@@ -678,7 +700,7 @@ risk and mitigation is enough.
 - **HAL (Hardware Abstraction Layer):** a software layer presenting a consistent API regardless of underlying hardware.
 - **HIL (Hardware-in-the-Loop) testing:** testing involving real physical hardware rather than simulation.
 - **IPC (Inter-Process Communication):** mechanisms allowing separate processes to exchange data.
-- **LVGL (Light and Versatile Graphics Library):** an open-source, lightweight embedded GUI library for MCUs and MPUs, widely used for HMI/display work in automotive, industrial, and consumer devices.
+- **LVGL (Light and Versatile Graphics Library):** an open-source, lightweight embedded GUI library for MCUs and MPUs, used here as an optional Extension Track technology for HMI/display work.
 - **MQTT:** a lightweight publish/subscribe messaging protocol common in IoT systems.
 - **OTA (Over-the-Air update):** remotely updating device firmware/software without physical access.
 - **RAUC / SWUpdate:** open-source frameworks for managing embedded Linux OTA updates, including rollback.

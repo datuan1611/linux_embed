@@ -29,11 +29,10 @@
 
 **ELDMP (Embedded Linux Device Management Platform)** là một dự án kỹ
 thuật cá nhân dài hạn, tự định hướng, được xây dựng nhằm phát triển năng
-lực sâu, có thể kiểm chứng được trong lĩnh vực kỹ thuật hệ thống Embedded
-Linux — trải dài từ kiến trúc dịch vụ user-space, kiến thức nội tại của
-Linux kernel, bring-up board nhúng, firmware MCU, cho đến giao tiếp
-thiết bị bảo mật — đồng thời tạo ra một portfolio phần mềm công khai, có
-versioning rõ ràng.
+lực sâu, có thể kiểm chứng được — trải dài từ kiến trúc dịch vụ
+user-space, kiến thức nội tại của Linux kernel, bring-up board nhúng,
+firmware MCU/RTOS, cho đến giao tiếp thiết bị bảo mật — đồng thời tạo ra
+một portfolio phần mềm công khai, có versioning rõ ràng.
 
 Dự án đi theo **mô hình học tập dẫn dắt bởi project (project-driven
 learning)**: mỗi đơn vị kiến thức học được đều gắn với một phần cụ thể,
@@ -44,13 +43,19 @@ V1.5, V2.0 …), mỗi bản đại diện cho một trạng thái hệ thống 
 
 **Những điểm thiết kế nổi bật.** Ba lựa chọn định hình roadmap này rõ nhất:
 
-1. **Công việc kernel-space bắt đầu sớm (Sprint 3).** Một driver tuỳ
-   chỉnh và Device Tree overlay — kỹ năng khác biệt đầu tiên có giá trị
-   thật sự — có thể chứng minh được sau khoảng tháng thứ 3–4, và đã là
-   một phần của bản release V1.0 thay vì xuất hiện muộn hơn. Kỹ năng
-   kernel-level càng được thể hiện sớm, thì việc tìm việc bị gián đoạn
-   hay biến cố cuộc sống càng ít có khả năng làm mất giá trị của
-   portfolio đã xây dựng được.
+1. **Công việc kernel-space bắt đầu ngay sau các sprint nền tảng
+   (Sprint 3), có kèm một bài warm-up phần cứng ngắn tích hợp sẵn.**
+   Trước khi đụng vào code kernel module, Sprint 3 mở đầu bằng một bài
+   tập user-space ngắn — truy cập trực tiếp thanh ghi GPIO qua `/dev/mem`
+   và `mmap()` — để xây trực giác mức thanh ghi trên chính board
+   (BeagleBone Black) mà công việc viết driver kernel sẽ dùng, không lặp
+   lại kiến thức mà chính kernel API sẽ dạy, và không cần mua board MCU
+   sớm hơn cần thiết. Toàn bộ công việc MCU/FreeRTOS (Sprint 10) được cố
+   tình để lại cho tới khi hoàn thành trọn vẹn track Linux — driver
+   kernel, nền tảng service, và một image Buildroot/Yocto tuỳ chỉnh. Dự
+   án này xem Embedded Linux là kỹ năng bắt buộc, quyết định vị trí
+   senior, và sắp xếp mọi thứ để bảo vệ tiến độ không gián đoạn hướng
+   tới nó.
 2. **Quy trình được giữ ở mức tối giản có chủ đích.** Mọi checklist,
    template, hay bước review trong tài liệu này chỉ tồn tại vì nó thực
    sự cải thiện hiệu quả học tập hoặc chất lượng portfolio cho một dự án
@@ -142,7 +147,7 @@ Roadmap được chia thành hai track:
         |        MCU (STM32H743ZI)          |
         |  Bare-metal / FreeRTOS            |
         |  Sensors / Motor / Control Loop   |
-        |  Embedded GUI (LVGL)              |
+        |  Embedded GUI (LVGL)*             |
         |  Protocol: heartbeat, CRC,        |
         |   retry, timeout, versioning      |
         +-----------------------------------+
@@ -160,7 +165,7 @@ Roadmap được chia thành hai track:
 | Middleware (Config, Logger, IPC, Storage, Security) | Hạ tầng dùng chung xuyên suốt | Viết một lần, tái sử dụng cho mọi service, kiểm thử độc lập được |
 | Services (Device, Health, Network, OTA, Diagnostic, Watchdog) | Logic nghiệp vụ | Mỗi service là một systemd unit nhỏ, triển khai độc lập |
 | CLI / REST / WebUI | Giao diện bên ngoài | Giữ mỏng; toàn bộ logic thật nằm ở Services |
-| MCU firmware | Điều khiển thời gian thực, xác định, và giao diện đồ hoạ nhúng | Chạy ở nơi Linux không thể đảm bảo hành vi thời gian thực, và nơi màn hình vật lý được gắn |
+| MCU firmware | Điều khiển thời gian thực, xác định | Chạy ở nơi Linux không thể đảm bảo hành vi thời gian thực |
 | Linux↔MCU protocol | Giao tiếp đáng tin cậy giữa hai bộ xử lý | Kỹ năng cấp senior nhất trong dự án: thiết kế protocol, không chỉ sử dụng nó |
 
 ---
@@ -183,7 +188,7 @@ eldmp/
 │   ├── monitor/
 │   ├── ipc/
 │   ├── driver/             # kernel module (từ Sprint 3)
-│   ├── mcu/                 # firmware STM32 + UI LVGL (từ Sprint 10)
+│   ├── mcu/                 # firmware STM32 (từ Sprint 10)
 │   ├── watchdog/
 │   └── app/
 ├── tests/
@@ -202,7 +207,7 @@ eldmp/
 ### 5.3 Chiến Lược Repository Cho Portfolio
 
 Một monorepo duy nhất, ngày càng lớn, sẽ khó để nhà tuyển dụng đánh giá
-trong 5 phút lướt qua. Ba sprint tạo ra công việc đủ giá trị để tồn tại
+trong 5 phút lướt qua. Bốn sprint tạo ra công việc đủ giá trị để tồn tại
 như **các repository nhỏ, độc lập, dễ xem riêng lẻ**, sau đó được tích
 hợp vào `eldmp` (dưới dạng git submodule hoặc chỉ đơn giản là liên kết
 và ghi chú lại):
@@ -211,7 +216,8 @@ và ghi chú lại):
 |---|---|---|
 | `eldmp-kernel-driver` | Sprint 3 | Một driver + DT overlay tập trung, khoảng 500 dòng, dễ đọc hơn nhiều khi đứng riêng so với bị chôn trong một codebase service lớn |
 | `eldmp-yocto-layer` | Sprint 9 | Một meta-layer Yocto tuỳ chỉnh là một artifact dễ nhận diện, độc lập, mà nhà tuyển dụng trong lĩnh vực này thường tìm kiếm |
-| `eldmp-linux-mcu-protocol` | Sprint 10–11 | Phần việc mạnh nhất trong toàn bộ dự án; nên chỉ cách một cú click, không phải nằm sâu trong nhiều thư mục |
+| `eldmp-mcu-firmware` | Sprint 10 | Một repo firmware FreeRTOS tập trung, có cấu trúc task/queue/semaphore đúng chuẩn — có thể show trực tiếp cho các vị trí xoay quanh MCU/RTOS |
+| `eldmp-linux-mcu-protocol` | Sprint 11 | Phần việc mạnh nhất trong toàn bộ dự án; nên chỉ cách một cú click, không phải nằm sâu trong nhiều thư mục |
 
 Mọi phần còn lại nằm trong repo umbrella `eldmp`, đóng vai trò là điểm
 tích hợp và câu chuyện "bức tranh tổng thể".
@@ -225,7 +231,7 @@ tích hợp và câu chuyện "bức tranh tổng thể".
 | Unit test | Một module đơn lẻ, độc lập | Sprint 1 | GoogleTest hoặc Catch2 | Không phụ thuộc hardware hay phiên D-Bus thật |
 | Integration test | Từ hai service trở lên giao tiếp qua IPC | Sprint 6 | Cùng framework, có phiên D-Bus đang chạy | Kiểm tra thủ công/có kịch bản là đủ ở đây. Việc xây dựng hạ tầng mock D-Bus tự động hoàn chỉnh không bắt buộc cho Core Track — đây là khoản đầu tư thực sự khó khăn và có giá trị thị trường thấp ở giai đoạn này. Chỉ tự động hoá sau này nếu việc kiểm tra thủ công trở nên quá tốn công. |
 | System / boot test | Toàn bộ image boot, mọi service khởi động | Sprint 3, mở rộng ở Sprint 9 | Boot thủ công + kiểm tra log | Boot test có kịch bản chính thức thuộc Extension Track (V4.0) |
-| Hardware-in-the-loop (HIL) | MCU thật + board thật giao tiếp qua kết nối vật lý | Sprint 10–11 | Fault injection thủ công (rút/cắm cáp, làm hỏng payload) | Đây là nơi cần sự nghiêm ngặt nhất — xem Definition of Done của Sprint 11 |
+| Hardware-in-the-loop (HIL) | MCU thật + board thật giao tiếp qua kết nối vật lý | Sprint 11 | Fault injection thủ công (rút/cắm cáp, làm hỏng payload) | Đây là nơi cần sự nghiêm ngặt nhất — xem Definition of Done của Sprint 11 |
 | Regression test | Chạy lại toàn bộ test của các sprint trước cùng nhau | Mỗi version milestone | Chạy tổng hợp cục bộ | Bắt buộc trước mỗi lần tag |
 
 **Quy ước:** vị trí file test phản ánh vị trí source
@@ -240,8 +246,7 @@ tích hợp và câu chuyện "bức tranh tổng thể".
 |---|---|---|---|---|
 | Nền tảng | Laptop Ubuntu hoặc VM | Môi trường phát triển chính | Sprint 0 | — (đã có sẵn) |
 | Board | BeagleBone Black Rev C | Mục tiêu Embedded Linux | Sprint 3 | $ |
-| MCU | STM32 Nucleo-H743ZI | Bộ đồng hành thời gian thực | Sprint 10–11 | $ |
-| Màn hình | Module LCD SPI/parallel nhỏ (tương thích LVGL) | Mục tiêu GUI nhúng | Sprint 10 | $ |
+| MCU | STM32 Nucleo-H743ZI | Bộ đồng hành thời gian thực | Sprint 10 | $ |
 | Networking | Adapter USB-Ethernet hoặc switch nhỏ | Môi trường test mạng | Sprint 12 (chỉ khi cần) | $ |
 | SoC công nghiệp | NXP i.MX93 | Mục tiêu của Extension Track | V6.0+ | $$–$$$ |
 
@@ -249,11 +254,13 @@ tích hợp và câu chuyện "bức tranh tổng thể".
 `$$$` = kit đánh giá cấp công nghiệp/AI. Giá thay đổi theo khu vực và
 thời gian — xem các mức này là định hướng tương đối, không phải báo giá.
 
-**Lộ trình phần cứng đã xác định:** BeagleBone Black Rev C cho Core
-Track, STM32 Nucleo-H743ZI cùng một module LCD nhỏ cho phía MCU và GUI
-nhúng, sau đó NXP i.MX93 làm mục tiêu SoC công nghiệp cho Extension
-Track. Không cần board thay thế nào ở bất kỳ giai đoạn nào — mỗi loại
-chỉ được mua khi đến đúng sprint cần nó (Nguyên tắc 4).
+**Lộ trình phần cứng đã xác định:** BeagleBone Black Rev C cho phần
+Linux/kernel của Core Track (Sprint 3), sau đó STM32 Nucleo-H743ZI cho
+phần MCU (Sprint 10), rồi NXP i.MX93 làm mục tiêu SoC công nghiệp cho
+Extension Track. Mỗi board chỉ được mua đúng lúc sprint cần nó — không
+board nào để không chờ dùng (Nguyên tắc 4). Một module màn hình LCD nhỏ
+chỉ cần mua nếu sau này theo đuổi nhánh mở rộng GUI nhúng (LVGL, tuỳ
+chọn, xem mục 12) — không thuộc Core Track.
 
 ---
 
@@ -274,16 +281,17 @@ chỉ được mua khi đến đúng sprint cần nó (Nguyên tắc 4).
 
 | Tài liệu | Nguồn | Dùng cho |
 |---|---|---|
+| *Exploring BeagleBone* | Derek Molloy | Sprint 3 — bao quát đúng tiến trình từ truy cập thanh ghi user-space qua `/dev/mem` cho tới viết kernel driver thật trên đúng board này |
 | Linux Kernel Labs | Linux Foundation / cộng đồng kernel | Sprint 3 |
 | *Mastering Embedded Linux Programming* | Chris Simmonds | Sprint 9 |
 | *Embedded Linux Systems with the Yocto Project* + Bootlin Labs | Rudolf J. Streif / Bootlin | Sprint 9 |
 
-### 8.3 MCU, FreeRTOS & GUI Nhúng
+### 8.3 MCU & FreeRTOS
 
 | Tài liệu | Nguồn | Dùng cho |
 |---|---|---|
+| Reference manual và HAL driver source của STM32 | STMicroelectronics | Sprint 10 |
 | Tài liệu chính thức và source kernel của FreeRTOS | FreeRTOS.org | Sprint 10 |
-| Tài liệu, hướng dẫn porting, và ví dụ widget của LVGL | Dự án LVGL | Sprint 10 |
 
 ### 8.4 Networking & Security
 
@@ -295,9 +303,9 @@ chỉ được mua khi đến đúng sprint cần nó (Nguyên tắc 4).
 ### 8.5 Chỉ Dành Cho Extension Track
 
 *Systems Performance* và *BPF Performance Tools* (Brendan Gregg) cho
-V4.0; tài liệu OP-TEE và Trusted Firmware-A cho V5.0;
-*C++ Concurrency in Action* (Anthony Williams) khi phần đa luồng trở nên
-phức tạp hơn.
+V4.0; tài liệu OP-TEE và Trusted Firmware-A cho V5.0; tài liệu và hướng
+dẫn porting của LVGL cho V8.0 (GUI nhúng, tuỳ chọn); *C++ Concurrency in
+Action* (Anthony Williams) khi phần đa luồng trở nên phức tạp hơn.
 
 ---
 
@@ -309,12 +317,17 @@ tiêu chí riêng của từng sprint:**
 - [ ] Một ghi chú kỹ thuật (300–600 từ: học được gì, cái gì bị lỗi, cách sửa) được viết vào `notes/`.
 - [ ] Ít nhất một đoạn source code thật, đang chạy trong sản phẩm thực tế đã được đọc, theo dòng "Reading" của sprint đó bên dưới — không phải code tutorial.
 
-**Vì sao công việc kernel lại đứng trước D-Bus/systemd/Watchdog:** viết
-một character driver và một Device Tree overlay không hề phụ thuộc kỹ
-thuật vào IPC hay service management — nó chỉ cần Logger và Config tồn
-tại để ghi lại kết quả. Sắp xếp nó ở Sprint 3 giúp bạn tiếp cận hardware
-thật và bước vào kernel-space ngay trong vài tháng đầu, mà không phá vỡ
-bất kỳ chuỗi prerequisite thực sự nào.
+**Vì sao công việc kernel đứng ngay sau các sprint nền tảng, có bài
+warm-up tích hợp thay vì một sprint riêng:** một sprint MCU/FreeRTOS đầy
+đủ trước Sprint 3 sẽ hoặc lặp lại đúng thứ kernel work tự nó sẽ dạy
+(trực giác thanh ghi/ngắt), hoặc buộc phải mua board MCU sớm hơn nhiều
+tháng so với lúc cần. Thay vào đó, Sprint 3 mở đầu bằng một bài tập
+truy cập thanh ghi ở user-space ngay trên board đang dùng cho công việc
+kernel, rồi đi thẳng vào nội dung kernel driver — không sprint riêng,
+không trùng lặp kiến thức, không mua hardware sớm, và không tốn thêm
+thời gian (nằm gọn trong buffer sẵn có của sprint). Toàn bộ phần build
+MCU/FreeRTOS được để lại cho Sprint 10, sau khi hoàn thành trọn vẹn
+track Linux.
 
 ---
 
@@ -350,14 +363,16 @@ bất kỳ chuỗi prerequisite thực sự nào.
 ---
 
 ### Sprint 3 — Kernel & Device Tree Fundamentals
-- **Mục tiêu:** chuyển từ năng lực chỉ ở user-space sang làm việc thật với kernel-space, ngay từ sớm.
-- **Thời lượng:** ~8–10 tuần (đã tính buffer dự phòng — debug kernel là công việc khó đoán nhất với người tự học, nên được xử lý cẩn trọng tương đương sprint Linux↔MCU Protocol)
+- **Mục tiêu:** chuyển từ năng lực chỉ ở user-space sang làm việc thật với kernel-space, có bài warm-up phần cứng ngắn trước để giảm rủi ro.
+- **Thời lượng:** ~8–10 tuần (đã tính buffer dự phòng — debug kernel là công việc khó đoán nhất với người tự học; bài lab warm-up bên dưới nằm gọn trong buffer này, không tốn thêm thời gian)
 - **Yêu cầu trước:** Sprint 2; đã có BeagleBone Black Rev C
-- **Study:** Linux Kernel Labs — boot process, character device driver, xử lý interrupt, Linux Device Model, kernel synchronization
-- **Reading:** một character driver đơn giản trong `drivers/char/` của mainline kernel, và chính Device Tree source của BeagleBone Black (`am335x-boneblack.dts`) để xem cách một board description thật được cấu trúc
-- **Lab (thử nghiệm, không ship):** làm theo đúng 2–3 bài lab chính thức của Linux Kernel Labs, trên code có thể bỏ đi, trước khi đụng vào driver "thật" — coi đây là sandbox an toàn để phá hỏng
+- **Study:** khái niệm I/O mức thanh ghi (memory-mapped I/O, `/dev/mem`, `mmap()`); sau đó Linux Kernel Labs — boot process, character device driver, xử lý interrupt, Linux Device Model, kernel synchronization
+- **Reading:** phần thanh ghi GPIO trong Technical Reference Manual của AM335x (chip trên BeagleBone Black); một character driver đơn giản trong `drivers/char/` của mainline kernel; chính Device Tree source của BeagleBone Black (`am335x-boneblack.dts`)
+- **Lab 0 (thử nghiệm, ~3–5 ngày, warm-up phần cứng trước khi đụng code kernel):** viết một chương trình C ở user-space mở `/dev/mem`, `mmap()` vùng thanh ghi GPIO, và bật/tắt một chân bằng cách đọc/ghi thanh ghi trực tiếp — không qua kernel API, không qua HAL. Bài này xây trực giác thanh ghi/bitwise mà driver kernel cần, trên hardware thật, không đụng code kernel và không cần board MCU.
+- **Lab (thử nghiệm, riêng cho kernel):** làm theo đúng 2–3 bài lab chính thức của Linux Kernel Labs, trên code có thể bỏ đi, trước khi đụng vào driver "thật" — coi đây là sandbox an toàn để phá hỏng
 - **Build (ship trong `eldmp-kernel-driver`):** một character device driver tuỳ chỉnh, một GPIO driver, một Device Tree overlay gắn vào hardware thật (nút bấm/LED)
 - **Definition of Done (riêng):**
+  - [ ] Lab 0: GPIO bật/tắt được qua `/dev/mem` + `mmap()` ở user-space, xác minh trên hardware thật
   - [ ] Driver tuỳ chỉnh load được qua `insmod` và hiện trong `dmesg` không lỗi
   - [ ] Device Tree overlay gắn đúng driver vào hardware thật
   - [ ] GPIO input theo interrupt được xác minh (không phải polling)
@@ -409,9 +424,9 @@ bất kỳ chuỗi prerequisite thực sự nào.
 - **Definition of Done (riêng):**
   - [ ] Một service bị treo có chủ đích được phát hiện và restart trong khoảng thời gian đã định
 
-**→ Release V1.0 — "Nền tảng kernel-space + user-space."** Bản release
-này đã bao gồm cả công việc driver/Device Tree thật lẫn kiến trúc service
-user-space đầy đủ. Checklist phát hành đầy đủ được áp dụng (mục 10).
+**→ Release V1.0 — "Nền tảng kernel-space + user-space, sẵn sàng cho
+portfolio."** Checklist phát hành đầy đủ được áp dụng (mục 10): sơ đồ
+kiến trúc, video demo, git tag, entry changelog.
 
 ---
 
@@ -431,17 +446,17 @@ user-space đầy đủ. Checklist phát hành đầy đủ được áp dụng 
 
 ---
 
-### Sprint 10 — MCU Bring-up & GUI Nhúng (LVGL)
-- **Mục tiêu:** thiết lập phía MCU độc lập — logic cảm biến/điều khiển cộng với một GUI nhúng cơ bản — trước khi kết nối với Linux.
-- **Thời lượng:** ~5–7 tuần | **Yêu cầu trước:** V1.5; đã có STM32 Nucleo-H743ZI và một module LCD SPI/parallel nhỏ
-- **Study:** UART, SPI, I2C, CAN, DMA, kiến thức nền FreeRTOS; kiến thức nền LVGL (widget, event loop, interface driver màn hình/input)
-- **Reading:** source của STM32 HAL driver cho các peripheral đang dùng, source scheduler của FreeRTOS, và hướng dẫn porting driver màn hình/input của chính LVGL để xem một thư viện GUI nhúng cấp sản xuất mong đợi được tích hợp ra sao
-- **Lab (thử nghiệm):** chớp đèn/đọc một cảm biến bằng code ví dụ của vendor trước, để tách riêng vấn đề toolchain/board khỏi logic của chính bạn; riêng biệt, chạy thử một demo widget có sẵn của LVGL trên màn hình trước khi gắn dữ liệu thật vào
-- **Build:** đọc cảm biến + vòng lặp điều khiển motor/PWM trên MCU, giao tiếp với PC qua UART; dữ liệu cảm biến cũng được hiển thị trực tiếp lên một UI dựa trên LVGL trên màn hình — đúng tech stack thường dùng cho cụm đồng hồ/infotainment ô tô và panel HMI thiết bị gia dụng
+### Sprint 10 — MCU Bring-up & FreeRTOS
+- **Mục tiêu:** xây dựng lớp ứng dụng MCU đầy đủ — logic cảm biến/điều khiển dùng đúng mô hình task/queue/semaphore của FreeRTOS.
+- **Thời lượng:** ~5–7 tuần | **Yêu cầu trước:** V1.5; đã có STM32 Nucleo-H743ZI
+- **Study:** UART, SPI, I2C, CAN, DMA; FreeRTOS task, queue, semaphore/mutex, timing
+- **Reading:** source của STM32 HAL driver cho các peripheral đang dùng, và source kernel của FreeRTOS cho phần lập lịch task và triển khai queue
+- **Lab (thử nghiệm):** chớp đèn/đọc một cảm biến bằng code ví dụ của vendor trước, để tách riêng vấn đề toolchain/board khỏi logic của chính bạn; riêng biệt, một bài tập producer/consumer nhỏ dùng FreeRTOS queue giữa 2 task, trước khi gắn vào ứng dụng thật
+- **Build (ship trong `eldmp-mcu-firmware`):** đọc cảm biến + vòng lặp điều khiển motor/PWM trên MCU, cấu trúc thành các FreeRTOS task riêng biệt, đồng bộ qua queue/semaphore (không dùng biến toàn cục dùng chung), giao tiếp với PC qua UART
 - **Definition of Done (riêng):**
   - [ ] Dữ liệu cảm biến đúng và ổn định theo thời gian
   - [ ] Vòng lặp điều khiển chạy ở tốc độ xác định, đã đo được
-  - [ ] UI LVGL cập nhật trực tiếp từ dữ liệu cảm biến thật, không bị xé hình (tearing) hay giật khung hình rõ rệt
+  - [ ] Các task được đồng bộ qua queue/semaphore của FreeRTOS — xác minh bằng một test race-condition cố ý tạo ra, mà bản đã đồng bộ vượt qua còn bản chưa đồng bộ sẽ thất bại
 
 ### Sprint 11 — Linux ↔ MCU Protocol
 - **Mục tiêu:** thiết kế và triển khai một protocol giao tiếp thật, đáng tin cậy giữa hai bộ xử lý.
@@ -528,23 +543,26 @@ milestone.
 | 0 | 2 tuần | 2 tuần | — |
 | 1 | 2 tuần | 4 tuần | — |
 | 2 | 2 tuần | 6 tuần | — |
-| 3 | 8–10 tuần | ~15 tuần | *(kỹ năng kernel/driver có thể chứng minh được ở đây, ~3,5 tháng)* |
+| 3 (Kernel & DT, kèm warm-up) | 8–10 tuần | ~15 tuần | *(kỹ năng kernel/driver có thể chứng minh được ở đây, ~3,5 tháng)* |
 | 4 | 2–3 tuần | ~18 tuần | — |
 | 5 | 2–3 tuần | ~21 tuần | — |
 | 6 | 3–4 tuần | ~25 tuần | — |
 | 7 | 2 tuần | ~27 tuần | — |
 | 8 | 2–3 tuần | ~30 tuần | **V1.0** |
 | 9 | 6–8 tuần | ~38 tuần | **V1.5** |
-| 10 | 5–7 tuần | ~44 tuần | — |
-| 11 | 8–10 tuần | ~53 tuần | **V2.0** |
-| 12 | 4–6 tuần | ~58 tuần | **V2.5** |
-| 13 | 4–6 tuần | ~63 tuần | **V3.0** |
-| 14 | 4–6 tuần | ~68 tuần | **V3.5 — Core Track hoàn thành** |
+| 10 (MCU + FreeRTOS) | 5–7 tuần | ~44 tuần | — |
+| 11 (Protocol) | 8–10 tuần | ~53 tuần | **V2.0** |
+| 12 (Networking) | 4–6 tuần | ~58 tuần | **V2.5** |
+| 13 (OTA) | 4–6 tuần | ~63 tuần | **V3.0** |
+| 14 (Security) | 4–6 tuần | ~68 tuần | **V3.5 — Core Track hoàn thành** |
 
 **Tổng thời lượng Core Track: khoảng 15–17 tháng** với nhịp độ bán thời
-gian cơ sở. Kỹ năng khác biệt, giá trị cao nhất — công việc kernel/driver
-— có thể chứng minh được sớm, khoảng tháng thứ 3,5, rất lâu trước khi có
-version tag đầu tiên.
+gian cơ sở. Công việc kernel-space — kỹ năng khác biệt, giá trị cao nhất
+mà roadmap này bảo vệ — có thể chứng minh được vào khoảng tháng thứ 3,5,
+và V1.0 (kernel + nền tảng user-space đầy đủ) đạt được vào khoảng tháng
+thứ 7. Bài lab warm-up phần cứng ở Sprint 3 và phần FreeRTOS đồng bộ sâu
+hơn ở Sprint 10 đều được hấp thụ mà không kéo dài thêm roadmap so với
+một trình tự kernel-trước thuần tuý.
 
 ### 11.2 Điều Chỉnh Nhịp Độ Theo Ngân Sách Thời Gian Hàng Tuần
 
@@ -570,7 +588,7 @@ Tuỳ chọn, chỉ chọn sau khi hoàn thành V3.5, dựa theo định hướn
 | V5.0 | Secure Boot & TEE (OP-TEE, TF-A, `dm-verity`, `dm-crypt`, A/B rollback) | Automotive, y tế, các vị trí nhạy cảm về bảo mật |
 | V6.0 | Port sang SoC công nghiệp trên nền NXP i.MX93 — RemoteProc, RPMsg, asymmetric multiprocessing, Time-Sensitive Networking, Real-Time Linux | Robotics hoặc tự động hoá công nghiệp |
 | V7.0 | REST API / WebUI / Cloud Dashboard | Các vị trí thiên về product |
-| V8.0 | ROS2 / suy luận AI on-device / GUI | Chuyên sâu robotics |
+| V8.0 | ROS2 / suy luận AI on-device / GUI nhúng (LVGL) | Robotics, edge-AI, hoặc các vị trí thiên về HMI automotive/thiết bị gia dụng — cần thêm một module LCD nhỏ không mua mặc định (xem mục 7) |
 
 ---
 
@@ -581,9 +599,9 @@ vì sao nó quan trọng với portfolio, và cách trình bày nó trong phỏn
 
 | Milestone | ~Tuần | Kỹ năng đạt được | Ý nghĩa với portfolio | Điểm nói trong phỏng vấn |
 |---|---|---|---|---|
-| **V1.0** | 30 | Kernel driver + Device Tree, D-Bus IPC, systemd, giám sát bằng watchdog, modern C++ | Bản release đầu tiên kết hợp cả kernel-space lẫn user-space — checkpoint "sớm" mạnh nhất nếu việc tìm việc bắt đầu trước khi roadmap hoàn tất | "Tôi đã xây dựng một platform nhúng nhiều service, trong đó một kernel driver tuỳ chỉnh expose dữ liệu hardware thật qua các D-Bus service, được quản lý bởi systemd cùng một watchdog ở cấp ứng dụng." |
+| **V1.0** | 30 | Kernel driver + Device Tree, D-Bus IPC, systemd, giám sát bằng watchdog, modern C++, I/O mức thanh ghi | Bản release đầu tiên kết hợp cả kernel-space lẫn user-space — checkpoint "sớm" mạnh nhất nếu việc tìm việc bắt đầu trước khi roadmap hoàn tất | "Tôi đã xây dựng một platform nhúng nhiều service, trong đó một kernel driver tuỳ chỉnh expose dữ liệu hardware thật qua các D-Bus service, được quản lý bởi systemd cùng một watchdog ở cấp ứng dụng." |
 | **V1.5** | 38 | Buildroot, Yocto, rootfs tuỳ chỉnh, cross-compilation | Có thể build và boot một image embedded Linux hoàn toàn tuỳ chỉnh từ đầu | "Tôi đã build và boot một image embedded Linux tuỳ chỉnh bằng cả Buildroot lẫn Yocto, hiểu rõ từng lớp từ bootloader đến root filesystem." |
-| **V2.0** | 53 | Firmware MCU (FreeRTOS), GUI nhúng (LVGL), protocol Linux↔MCU tuỳ chỉnh (CRC/retry/versioning) | Điểm khác biệt mạnh nhất trong dự án — một protocol được thiết kế và kiểm thử lỗi thật, không chỉ đơn thuần sử dụng, cộng thêm một GUI nhúng thật ở phía MCU | "Tôi đã thiết kế và triển khai một protocol chịu lỗi giữa Linux và MCU, kiểm chứng nó với các lỗi kết nối thật, và phía MCU chạy một UI dựa trên LVGL hiển thị dữ liệu cảm biến theo thời gian thực — đúng tech stack dùng cho cụm đồng hồ ô tô và panel HMI thiết bị gia dụng." |
+| **V2.0** | 53 | Firmware FreeRTOS nâng cao (task/queue/semaphore), protocol Linux↔MCU tuỳ chỉnh (CRC/retry/versioning) | Điểm khác biệt mạnh nhất trong dự án — một firmware MCU xây đúng chuẩn đồng bộ RTOS, kết hợp với một protocol được thiết kế và kiểm thử lỗi thật | "Tôi đã thiết kế và triển khai một protocol chịu lỗi giữa Linux và MCU — trong đó phía MCU chạy các FreeRTOS task riêng, đồng bộ qua queue và semaphore — và kiểm chứng đường truyền với các lỗi kết nối thật, không chỉ trường hợp lý tưởng." |
 | **V2.5** | 58 | TCP/IP, MQTT | Platform đã kết nối mạng và giám sát được từ xa | "Trạng thái/health của thiết bị được publish tới một broker từ xa theo thời gian thực, với khả năng tự kết nối lại." |
 | **V3.0** | 63 | Vòng đời OTA (SWUpdate/RAUC) | Hoạt động như một sản phẩm IoT/công nghiệp thương mại thật | "Đã triển khai một pipeline OTA từ chối các package bị hỏng trước khi cài đặt." |
 | **V3.5** | 68 | TLS, update đã ký | Portfolio hoàn chỉnh — đủ sức thuyết phục cho phỏng vấn Senior Embedded Linux Engineer | "Toàn bộ platform được mã hoá đầu-cuối và update được ký số." |
@@ -602,14 +620,14 @@ thay vì một câu mơ hồ kiểu "đã từng làm về embedded Linux."
 2. Sơ đồ kiến trúc (mục 4.1)
 3. "Điều dự án này chứng minh" — danh sách gạch đầu dòng ngắn, lấy từ mục 13
 4. Version hiện tại và thay đổi gần nhất
-5. Link tới 3 repo spin-out độc lập (mục 5.3)
+5. Link tới 4 repo spin-out độc lập (mục 5.3)
 6. Cách build/chạy, hoặc nơi xem video demo
 7. Link tới tài liệu roadmap này
 
-### 14.2 Cấu Trúc README Cho Từng Repo Độc Lập (3 Repo Spin-out)
+### 14.2 Cấu Trúc README Cho Từng Repo Độc Lập (4 Repo Spin-out)
 
-Mỗi repo `eldmp-kernel-driver`, `eldmp-yocto-layer`, và
-`eldmp-linux-mcu-protocol` cần đọc hiểu được mà không cần bối cảnh từ
+Mỗi repo `eldmp-kernel-driver`, `eldmp-yocto-layer`, `eldmp-mcu-firmware`,
+và `eldmp-linux-mcu-protocol` cần đọc hiểu được mà không cần bối cảnh từ
 repo umbrella: một đoạn mô tả vấn đề, những gì đã xây dựng, cách
 chạy/test, và một link quay lại `eldmp` để thấy bức tranh tổng thể.
 
@@ -649,7 +667,11 @@ Lựa chọn thực tế đã được đưa ra.
 3. **ADR-0003 — Dùng D-Bus cho IPC**, thay vì Unix socket thô hoặc shared memory.
 4. **ADR-0004 — Một protocol tự thiết kế, xây dựng dần dần (UART→SPI→CAN)** cho kết nối Linux↔MCU, thay vì áp dụng thẳng một protocol có sẵn như Modbus.
 
-(ADR thứ năm, ADR-0005, chỉ được thêm khi việc port sang i.MX93 được lên kế hoạch chi tiết ở V6.0.)
+(ADR thứ năm, ADR-0005, chỉ được thêm khi việc port sang i.MX93 được lên
+kế hoạch chi tiết ở V6.0. Quyết định gộp bài warm-up phần cứng vào
+Sprint 3 thay vì tạo một sprint MCU-trước riêng được ghi lại trong phần
+"Design Highlights" ở mục 1 thay vì thành một ADR riêng, vì đây là quyết
+định về trình tự roadmap chứ không phải quyết định kiến trúc hệ thống.)
 
 ---
 
@@ -663,11 +685,12 @@ sách bao gồm cả rủi ro lẫn cách khắc phục là đủ.
 | Mua hardware quá sớm | Hào hứng muốn "bắt đầu ngay" với hardware | Tuân theo thời điểm mua ở mục 7 — hardware mua trước sprint cần nó thường bị bỏ không dùng |
 | Làm hỏng hardware khi làm việc với kernel/driver | Khó tránh khỏi khi flash/thử nghiệm ở mức độ này | Luôn giữ bản backup SD card; coi board là "có thể hy sinh" trong quá trình thử nghiệm ở Sprint 3 |
 | Rút gọn Sprint 3 hoặc Sprint 11 | Đây là hai sprint khó đoán nhất, giá trị cao nhất | Cả hai đã có buffer dự phòng rõ ràng — bảo vệ nó, không lấy lại buffer này cho sprint khác |
+| Bỏ qua Lab 0 (bài warm-up `/dev/mem`) để "tiết kiệm thời gian" | Dễ muốn nhảy thẳng vào kernel module | Lab 0 ngắn (3–5 ngày) và nằm gọn trong buffer sẵn có của Sprint 3 — bỏ qua nó không tiết kiệm được thời gian đáng kể nhưng lại mất đi phần giảm rủi ro mà nó mang lại |
 | Scope creep từ ý tưởng của Extension Track | Secure boot hay performance tooling có thể trông hấp dẫn hơn việc hoàn thành OTA/TLS | Được kiểm soát bởi Nguyên tắc 6 — ghi lại ý tưởng, đừng xây dựng nó, cho đến khi hoàn thành V3.5 |
 | Đầu tư quá mức vào test tự động cho D-Bus | Mock D-Bus thực sự khó và có giá trị thị trường thấp ở giai đoạn này | Kiểm tra thủ công/có kịch bản là đủ cho Core Track (mục 6) |
 | Viết ADR cho mọi quyết định nhỏ | Cảm giác nghiêm túc, nhưng gây mệt mỏi và khiến nó không còn được đọc | Giới hạn đúng 4 ADR cho Core Track (mục 15) |
 | Nợ tài liệu hoá | Dễ bị trì hoãn "để sau" | Đã được ngăn chặn từ trước bởi Definition of Done chung (mục 9), buộc ghi chú mỗi sprint phải có, không phải việc tuỳ chọn |
-| Áp lực thời gian tìm việc so với độ dài roadmap | Cuộc sống thật không chờ đến V3.5 | V1.0 đã bao gồm sẵn công việc kernel-space, nên đây là một checkpoint độc lập, đủ mạnh để dùng riêng |
+| Áp lực thời gian tìm việc so với độ dài roadmap | Cuộc sống thật không chờ đến V3.5 | V1.0 đã bao gồm sẵn công việc kernel-space, nên đây là một checkpoint độc lập, đủ mạnh để dùng riêng, đạt được vào khoảng tháng thứ 7 |
 
 ---
 
@@ -682,7 +705,7 @@ sách bao gồm cả rủi ro lẫn cách khắc phục là đủ.
 - **HAL (Hardware Abstraction Layer):** một lớp phần mềm cung cấp API nhất quán bất kể hardware bên dưới là gì.
 - **HIL (Hardware-in-the-Loop) testing:** kiểm thử có sự tham gia của hardware vật lý thật, không phải mô phỏng.
 - **IPC (Inter-Process Communication):** các cơ chế cho phép các process riêng biệt trao đổi dữ liệu.
-- **LVGL (Light and Versatile Graphics Library):** một thư viện GUI nhúng mã nguồn mở, nhẹ, dùng cho MCU và MPU, được dùng rộng rãi cho các ứng dụng HMI/màn hình trong automotive, công nghiệp, và thiết bị tiêu dùng.
+- **LVGL (Light and Versatile Graphics Library):** một thư viện GUI nhúng mã nguồn mở, nhẹ, dùng cho MCU và MPU, ở đây được xem là một công nghệ tuỳ chọn thuộc Extension Track cho công việc HMI/màn hình.
 - **MQTT:** một giao thức messaging publish/subscribe nhẹ, phổ biến trong hệ thống IoT.
 - **OTA (Over-the-Air update):** cập nhật firmware/phần mềm thiết bị từ xa mà không cần truy cập vật lý.
 - **RAUC / SWUpdate:** các framework mã nguồn mở để quản lý update OTA cho embedded Linux, bao gồm cả rollback.
