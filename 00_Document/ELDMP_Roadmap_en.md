@@ -201,6 +201,9 @@ eldmp/
 - **Version control:** one Git tag per version milestone; commit messages describe the sprint and the change.
 - **Configuration over hard-coding:** anything that could differ between boards or deployments lives in `config.json`.
 - **Documentation:** `docs/architecture/` for diagrams and the 4 ADRs; `docs/release-notes/` per version tag; `notes/` for the per-sprint learning write-up required by every sprint's Definition of Done (Section 9).
+- **Code quality:** builds with `-Wall -Wextra`, zero warnings tolerated by V1.0 — a cheap, concrete signal of care that costs nothing but enabling the flags.
+- **Continuous Integration:** a minimal GitHub Actions workflow (or equivalent), set up in Sprint 0, that builds the project and runs unit tests on every push. A green build badge on the README is one of the cheapest, highest-visibility portfolio signals available.
+- **License:** the umbrella repo and each spin-out repo carries an open-source license (e.g. MIT) from Sprint 0 — a near-zero-cost signal that the code is meant to be read and reused.
 
 ### 5.3 Portfolio repository strategy
 
@@ -259,6 +262,20 @@ target. Each board is purchased right when its sprint needs it — no
 board sits idle waiting to be used (Principle 4). A small LCD display
 module is only needed if the optional embedded-GUI (LVGL) extension is
 pursued later (Section 12) — it is not part of the Core Track.
+
+**Small components needed alongside the boards above** (low-cost,
+usually cheaper as a generic "starter kit" bundle than bought
+individually):
+
+| Sprint | Components | Purpose |
+|---|---|---|
+| 3 | Breadboard, jumper wires (M–M and M–F), a few LEDs, 220–330Ω resistors, a few 10kΩ resistors, a few tactile push buttons, a microSD card (Class 10+, 8–16GB), a **3.3V** USB-to-TTL serial cable | GPIO output/input for Lab 0 and the driver work; the microSD doubles as the backup image from Section 16; the serial cable is the only way to see early boot logs if the board fails to come up over network/USB — a critical safety net for Sprint 3 and again for Sprint 9 |
+| 10 | A small DC motor, a motor driver IC/breakout (e.g. L298N or DRV8833), a simple sensor (e.g. a potentiometer, a DS18B20 temperature sensor, or an IR distance sensor) | The sensor read + motor/PWM control loop build |
+| 11 | Two CAN transceiver breakout modules (e.g. MCP2551 or SN65HVD230), one per board | Neither the BeagleBone Black nor the STM32 Nucleo exposes a CAN transceiver on-board — only the CAN controller peripheral; a transceiver is required to put signals on a physical CAN bus |
+
+**Important:** the USB-to-TTL adapter must be **3.3V** logic level, not
+5V/RS232 — the BeagleBone Black's UART header is not 5V-tolerant, and a
+5V adapter can damage the board.
 
 ---
 
@@ -334,10 +351,11 @@ entire Linux track is complete.
 - **Goal:** reproducible dev environment and repository skeleton.
 - **Duration:** ~2 weeks | **Prerequisites:** none
 - **Study:** Git, Bash, CMake, Markdown
-- **Build:** repository skeleton per Section 5.1, coding style guide, initial README
+- **Build:** repository skeleton per Section 5.1, coding style guide, initial README, LICENSE file, and a minimal CI workflow (build + run unit tests on every push)
 - **Definition of Done (specific):**
   - [ ] Repository builds an empty CMake project successfully
   - [ ] README explains how to build and run
+  - [ ] CI pipeline runs on every push and passes
 
 ### Sprint 1 — Logger
 - **Goal:** reusable logging library used by every later component.
@@ -367,7 +385,7 @@ entire Linux track is complete.
 - **Prerequisites:** Sprint 2; BeagleBone Black Rev C acquired
 - **Study:** register-level I/O concepts (memory-mapped I/O, `/dev/mem`, `mmap()`); then Linux Kernel Labs — boot process, character device drivers, interrupt handling, Linux Device Model, kernel synchronization
 - **Reading:** the BeagleBone Black's AM335x Technical Reference Manual section on GPIO registers; one simple character driver from `drivers/char/` in the mainline kernel source; the BeagleBone Black's own Device Tree source (`am335x-boneblack.dts`)
-- **Lab 0 (throwaway, ~3–5 days, hardware warm-up before any kernel code):** write a small user-space C program that opens `/dev/mem`, `mmap()`s the GPIO register region, and toggles a pin via direct register read/write — no kernel API, no HAL. This builds the bitwise/register intuition the kernel driver needs, on real hardware, without touching kernel code and without needing the MCU board.
+- **Lab 0 (throwaway, ~3–5 days, hardware warm-up before any kernel code):** write a small user-space C program that opens `/dev/mem`, `mmap()`s the GPIO register region, and toggles a pin via direct register read/write — no kernel API, no HAL. This builds the bitwise/register intuition the kernel driver needs, on real hardware, without touching kernel code and without needing the MCU board. **Caution:** a pin must be muxed to GPIO mode before raw register writes take effect — use the `config-pin` utility or confirm the pin's mode in the AM335x Technical Reference Manual before assuming a register write has failed.
 - **Lab (throwaway, kernel-specific):** follow 2–3 official Linux Kernel Labs exercises exactly as written, on disposable code, before touching the "real" driver — treat these as safe-to-break sandboxes
 - **Build (ships in `eldmp-kernel-driver`):** one custom character device driver, one GPIO driver, a Device Tree overlay binding it to real hardware (button/LED)
 - **Definition of Done (specific):**
@@ -615,7 +633,7 @@ kind an interviewer can ask a follow-up question about — not a vague
 
 ### 14.1 Top-level `eldmp` README outline
 
-1. One-line pitch — what ELDMP is and who it's for
+1. One-line pitch — what ELDMP is and who it's for, with the CI build status badge
 2. Architecture diagram (Section 4.1)
 3. "What this demonstrates" — a short bullet list drawn from Section 13
 4. Current version and what changed most recently
