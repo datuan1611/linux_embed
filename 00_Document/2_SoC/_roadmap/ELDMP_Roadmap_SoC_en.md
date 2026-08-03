@@ -294,10 +294,16 @@ individually):
 
 ### 8.2 Kernel & Embedded Linux
 
+**Reading priority for Sprint 3:** treat *Linux Kernel Labs* as the one
+resource to follow sequentially — it paces the hands-on exercises.
+Everything else below is a reference to consult for the specific gap it
+fills, not a second book to read cover-to-cover in parallel.
+
 | Resource | Source | Used for |
 |---|---|---|
 | *Exploring BeagleBone* | Derek Molloy | Sprint 3 — specifically covers the progression from userspace `/dev/mem` register access to writing real kernel drivers on this exact board |
 | Linux Kernel Labs | Linux Foundation / kernel community | Sprint 3 |
+| *Computer Organization and Design: ARM Edition* — cache hierarchy and virtual memory chapters | Patterson & Hennessy | Sprint 3 — the real memory architecture of the BeagleBone Black's Cortex-A8; fills a gap neither the STM32-focused MCU material (Section 8.3) nor OSTEP's OS-level view of virtual memory covers at the hardware level |
 | *Mastering Embedded Linux Programming* | Chris Simmonds | Sprint 9 |
 | *Embedded Linux Systems with the Yocto Project* + Bootlin Labs | Rudolf J. Streif / Bootlin | Sprint 9 |
 
@@ -307,6 +313,7 @@ individually):
 |---|---|---|
 | STM32 reference manual and HAL driver source | STMicroelectronics | Sprint 10 |
 | FreeRTOS official documentation and kernel source | FreeRTOS.org | Sprint 10 |
+| *Computer Organization and Design: ARM Edition* — ISA/assembly chapters only | Patterson & Hennessy | Sprint 10 — light, optional supplement for reading disassembly and compiler output; skip the cache/virtual-memory chapters here, they're mapped to Sprint 3 (Section 8.2) instead since they describe Cortex-A, not Cortex-M, behavior |
 
 ### 8.4 Networking & Security
 
@@ -319,7 +326,20 @@ individually):
 
 *Systems Performance* and *BPF Performance Tools* (Brendan Gregg) for
 V4.0; OP-TEE and Trusted Firmware-A documentation for V5.0; LVGL
-documentation and porting guide for V8.0 (embedded GUI, optional);
+documentation and porting guide for V8.0 (embedded GUI, optional).
+
+**On *Computer Systems: A Programmer's Perspective* (CS:APP, Bryant &
+O'Hallaron):** not recommended as Core Track reading — most of its
+content (process control, signals, virtual memory from an OS-API
+viewpoint) duplicates OSTEP and TLPI, already precisely mapped into the
+Core Track, and its primary example architecture is x86-64 rather than
+ARM. Two chapters are genuinely unique and not covered anywhere else in
+this roadmap: **linking/loading** (how the linker and loader actually
+work) and **machine-code-level buffer-overflow/exploitation**. Both are
+worth reading for V5.0 (Security) specifically, as a precursor to
+*Practical Binary Analysis* (Andriesse) — the exploitation chapter
+builds directly toward the binary-analysis skills that book requires.
+
 *C++ Concurrency in Action* (Anthony Williams) as multi-threading grows
 more complex.
 

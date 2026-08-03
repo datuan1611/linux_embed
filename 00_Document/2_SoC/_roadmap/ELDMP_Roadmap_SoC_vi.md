@@ -295,10 +295,17 @@ nhầm adapter 5V có thể làm hỏng board.
 
 ### 8.2 Kernel & Embedded Linux
 
+**Thứ tự ưu tiên đọc cho Sprint 3:** coi *Linux Kernel Labs* là tài liệu
+duy nhất cần theo tuần tự — nó định nhịp cho các bài tập thực hành. Mọi
+thứ còn lại bên dưới là tài liệu tham chiếu, tra cứu khi cần đúng khoảng
+trống nó lấp, không phải một cuốn sách thứ hai cần đọc song song từ đầu
+đến cuối.
+
 | Tài liệu | Nguồn | Dùng cho |
 |---|---|---|
 | *Exploring BeagleBone* | Derek Molloy | Sprint 3 — bao quát đúng tiến trình từ truy cập thanh ghi user-space qua `/dev/mem` cho tới viết kernel driver thật trên đúng board này |
 | Linux Kernel Labs | Linux Foundation / cộng đồng kernel | Sprint 3 |
+| *Computer Organization and Design: ARM Edition* — chương cache hierarchy và virtual memory | Patterson & Hennessy | Sprint 3 — đúng kiến trúc bộ nhớ thật của Cortex-A8 trên BeagleBone Black; lấp khoảng trống mà cả tài liệu MCU tập trung STM32 (mục 8.3) lẫn góc nhìn OS của OSTEP về virtual memory đều chưa phủ tới ở mức phần cứng |
 | *Mastering Embedded Linux Programming* | Chris Simmonds | Sprint 9 |
 | *Embedded Linux Systems with the Yocto Project* + Bootlin Labs | Rudolf J. Streif / Bootlin | Sprint 9 |
 
@@ -308,6 +315,7 @@ nhầm adapter 5V có thể làm hỏng board.
 |---|---|---|
 | Reference manual và HAL driver source của STM32 | STMicroelectronics | Sprint 10 |
 | Tài liệu chính thức và source kernel của FreeRTOS | FreeRTOS.org | Sprint 10 |
+| *Computer Organization and Design: ARM Edition* — chỉ phần ISA/assembly | Patterson & Hennessy | Sprint 10 — bổ trợ nhẹ, tuỳ chọn, giúp đọc disassembly và output compiler; bỏ qua các chương cache/virtual-memory ở đây, chúng được gắn vào Sprint 3 (mục 8.2) vì mô tả hành vi Cortex-A, không phải Cortex-M |
 
 ### 8.4 Networking & Security
 
@@ -320,7 +328,21 @@ nhầm adapter 5V có thể làm hỏng board.
 
 *Systems Performance* và *BPF Performance Tools* (Brendan Gregg) cho
 V4.0; tài liệu OP-TEE và Trusted Firmware-A cho V5.0; tài liệu và hướng
-dẫn porting của LVGL cho V8.0 (GUI nhúng, tuỳ chọn); *C++ Concurrency in
+dẫn porting của LVGL cho V8.0 (GUI nhúng, tuỳ chọn).
+
+**Về *Computer Systems: A Programmer's Perspective* (CS:APP, Bryant &
+O'Hallaron):** không đề xuất đưa vào Core Track — phần lớn nội dung của
+nó (process control, signal, virtual memory ở góc nhìn API của OS)
+trùng lặp với OSTEP và TLPI đã được gắn chính xác vào Core Track, và
+kiến trúc ví dụ chính của sách là x86-64 chứ không phải ARM. Hai chương
+thật sự độc đáo, không cuốn nào khác trong roadmap này dạy: **linking/
+loading** (cách linker và loader hoạt động thật sự) và **buffer
+overflow/exploitation ở mức machine-code**. Cả hai đáng đọc riêng cho
+V5.0 (Security), làm nền trực tiếp trước *Practical Binary Analysis*
+(Andriesse) — chương exploitation dẫn thẳng tới kỹ năng phân tích binary
+mà cuốn đó yêu cầu.
+
+*C++ Concurrency in
 Action* (Anthony Williams) khi phần đa luồng trở nên phức tạp hơn.
 
 ---

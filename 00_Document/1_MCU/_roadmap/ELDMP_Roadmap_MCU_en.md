@@ -312,15 +312,7 @@ sometimes comes from more than one book.
 | *The Definitive Guide to ARM Cortex-M3/M4* | Joseph Yiu | Exception model, NVIC, memory map — the chapters directly relevant to bare-metal bring-up |
 | *Mastering STM32* | Carmine Noviello | Peripheral setup chapters matching whatever is in use (GPIO, UART, SPI, I2C, CAN, DMA) |
 | STM32H743 reference manual | STMicroelectronics | Register-level detail, used as-needed rather than read start to end |
-
-**Note on *Computer Organization and Design: ARM Edition*:** this is
-placed in Section 8.6 (Extension) rather than as a Sprint 3
-prerequisite. Its most valuable content for this project — cache
-hierarchies, virtual memory, out-of-order pipelining — describes
-Cortex-A-class behavior (relevant to Sprint 6's SoC) far more than
-Cortex-M, which has neither cache nor an MMU in most parts. Reading it
-in full before Sprint 3 would front-load hundreds of pages that don't
-apply yet.
+| *Computer Organization and Design: ARM Edition* — ISA/assembly chapters only | Patterson & Hennessy | Light, optional supplement to Yiu: reading disassembly and compiler output. Skip the cache/virtual-memory/pipelining chapters here — they describe Cortex-A behavior (Sprint 6's SoC), not Cortex-M, and are mapped to Section 8.3 instead. |
 
 ### 8.2 MCU + RTOS + Embedded GUI (Sprint 4–5)
 
@@ -332,9 +324,18 @@ apply yet.
 
 ### 8.3 Kernel & Embedded Linux (Sprint 6, 12)
 
+**Reading priority for Sprint 6:** treat *Linux Kernel Labs* as the one
+resource to follow sequentially — it paces the hands-on exercises.
+Everything else below is a reference to consult for the specific gap it
+fills, not a second or third book to read cover-to-cover in parallel:
+Robert Love for the scheduler/memory-manager "why", LDD3 for driver
+structure (with the version caveat noted), and the CO&D:ARM chapters for
+cache/virtual-memory architecture.
+
 | Resource | Author(s) | Used for |
 |---|---|---|
 | OSTEP — Address Spaces & Virtual Memory | Arpaci-Dusseau | Sprint 6 (kernel/user space separation is central to driver work) |
+| *Computer Organization and Design: ARM Edition* — cache hierarchy and virtual memory chapters | Patterson & Hennessy | Sprint 6 — the real memory architecture of the BeagleBone Black's Cortex-A8; fills the gap neither Yiu (Cortex-M has no cache/MMU) nor OSTEP (OS-level view, not hardware-level) covers |
 | Linux Kernel Labs | Linux Foundation / kernel community | Sprint 6 — hands-on exercises |
 | *Linux Kernel Development* | Robert Love | Sprint 6 — the conceptual companion to Kernel Labs' hands-on exercises: why the scheduler and memory manager are structured the way they are |
 | *Linux Device Drivers* (3rd ed., "LDD3") | Corbet, Rubini, Kroah-Hartman | Sprint 6 — the classic structural reference for driver design, **with a caveat:** written for kernel 2.6.10; many specific API calls it describes have since changed or been removed. Use it for concepts and structure, not copy-paste API calls — cross-check anything version-specific against current kernel documentation (`Documentation/driver-api/` in the kernel source tree) or Linux Kernel Labs. |
@@ -362,11 +363,20 @@ apply yet.
 ### 8.6 Extension Track only
 
 *Systems Performance* and *BPF Performance Tools* (Brendan Gregg) for
-V4.0; *Computer Organization and Design: ARM Edition* (Patterson &
-Hennessy) as an optional deep-dive into cache/virtual-memory/pipelining
-concepts once the SoC side is running (see note in 8.1); OP-TEE and
-Trusted Firmware-A documentation for V5.0; *Practical Binary Analysis*
-(Andriesse) for V5.0 if pursuing the security direction specifically;
+V4.0; OP-TEE and Trusted Firmware-A documentation for V5.0.
+
+**On *Computer Systems: A Programmer's Perspective* (CS:APP, Bryant &
+O'Hallaron):** not recommended as Core Track reading — most of its
+content (process control, signals, virtual memory from an OS-API
+viewpoint) duplicates OSTEP and TLPI, already precisely mapped into the
+Core Track, and its primary example architecture is x86-64 rather than
+ARM. Two chapters are genuinely unique and not covered anywhere else in
+this roadmap: **linking/loading** (how the linker and loader actually
+work) and **machine-code-level buffer-overflow/exploitation**. Both are
+worth reading for V5.0 (Security) specifically, as a precursor to
+*Practical Binary Analysis* (Andriesse) — the exploitation chapter
+builds directly toward the binary-analysis skills that book requires.
+
 *C++ Concurrency in Action* (Anthony Williams) as multi-threading grows
 more complex.
 
@@ -679,10 +689,10 @@ Optional, chosen only after V3.5, based on career direction:
 | Version | Focus | Why you'd pick it |
 |---|---|---|
 | V4.0 | Performance & Observability (*Systems Performance*, eBPF, `perf`) | Platform/infrastructure-heavy roles |
-| V5.0 | Secure Boot & TEE (OP-TEE, TF-A, `dm-verity`, `dm-crypt`, A/B rollback); optionally *Practical Binary Analysis* if pursuing security/reverse-engineering depth | Automotive, medical, security-sensitive roles |
+| V5.0 | Secure Boot & TEE (OP-TEE, TF-A, `dm-verity`, `dm-crypt`, A/B rollback); optionally CS:APP's linking/loading and exploitation chapters plus *Practical Binary Analysis* if pursuing security/reverse-engineering depth | Automotive, medical, security-sensitive roles |
 | V6.0 | Industrial SoC Port on NXP i.MX93 — RemoteProc, RPMsg, asymmetric multiprocessing, Time-Sensitive Networking, Real-Time Linux | Robotics or industrial automation roles |
 | V7.0 | REST API / WebUI / Cloud Dashboard | Product-oriented roles |
-| V8.0 | ROS2 / on-device AI inference / deeper computer-architecture study (*Computer Organization and Design: ARM Edition*) | Robotics or edge-AI specialization |
+| V8.0 | ROS2 / on-device AI inference / GUI | Robotics or edge-AI specialization |
 
 ---
 

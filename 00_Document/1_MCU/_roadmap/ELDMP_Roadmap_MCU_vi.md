@@ -308,14 +308,7 @@ nào trong danh sách dưới đây cần đọc trọn từ đầu đến cuố
 | *The Definitive Guide to ARM Cortex-M3/M4* | Joseph Yiu | Exception model, NVIC, memory map — đúng những chương liên quan trực tiếp tới bring-up bare-metal |
 | *Mastering STM32* | Carmine Noviello | Các chương thiết lập peripheral khớp với thứ đang dùng (GPIO, UART, SPI, I2C, CAN, DMA) |
 | Reference manual của STM32H743 | STMicroelectronics | Chi tiết mức thanh ghi, dùng khi cần chứ không đọc từ đầu tới cuối |
-
-**Ghi chú về *Computer Organization and Design: ARM Edition*:** cuốn
-này được xếp vào mục 8.6 (Extension) thay vì bắt buộc trước Sprint 3.
-Phần giá trị nhất của nó cho dự án này — cache hierarchy, virtual
-memory, pipelining out-of-order — mô tả hành vi lớp Cortex-A (liên quan
-tới SoC ở Sprint 6) nhiều hơn hẳn Cortex-M, vốn không có cache và không
-có MMU ở phần lớn dòng chip. Đọc trọn cuốn này trước Sprint 3 sẽ đẩy vào
-đầu hàng trăm trang nội dung chưa áp dụng được.
+| *Computer Organization and Design: ARM Edition* — chỉ phần ISA/assembly | Patterson & Hennessy | Bổ trợ nhẹ, tuỳ chọn cho Yiu: đọc disassembly và output compiler. Bỏ qua các chương cache/virtual-memory/pipelining ở đây — chúng mô tả hành vi Cortex-A (SoC ở Sprint 6), không phải Cortex-M, và được gắn vào mục 8.3 thay vào đó. |
 
 ### 8.2 MCU + RTOS + GUI Nhúng (Sprint 4–5)
 
@@ -327,9 +320,18 @@ có MMU ở phần lớn dòng chip. Đọc trọn cuốn này trước Sprint 3
 
 ### 8.3 Kernel & Embedded Linux (Sprint 6, 12)
 
+**Thứ tự ưu tiên đọc cho Sprint 6:** coi *Linux Kernel Labs* là tài liệu
+duy nhất cần theo tuần tự — nó định nhịp cho các bài tập thực hành. Mọi
+thứ còn lại bên dưới là tài liệu tham chiếu, tra cứu khi cần đúng khoảng
+trống nó lấp, không phải cuốn sách thứ hai hay thứ ba cần đọc song song:
+Robert Love cho phần "vì sao" của scheduler/memory-manager, LDD3 cho cấu
+trúc driver (kèm lưu ý về version), và các chương CO&D:ARM cho kiến trúc
+cache/virtual-memory.
+
 | Tài liệu | Tác giả | Dùng cho |
 |---|---|---|
 | OSTEP — Address Spaces & Virtual Memory | Arpaci-Dusseau | Sprint 6 (ranh giới kernel/user space là trọng tâm của việc viết driver) |
+| *Computer Organization and Design: ARM Edition* — chương cache hierarchy và virtual memory | Patterson & Hennessy | Sprint 6 — đúng kiến trúc bộ nhớ thật của Cortex-A8 trên BeagleBone Black; lấp khoảng trống mà cả Yiu (Cortex-M không có cache/MMU) lẫn OSTEP (góc nhìn OS, không phải mức phần cứng) đều chưa phủ tới |
 | Linux Kernel Labs | Linux Foundation / cộng đồng kernel | Sprint 6 — bài tập thực hành |
 | *Linux Kernel Development* | Robert Love | Sprint 6 — phần bổ trợ khái niệm cho các bài tập thực hành của Kernel Labs: vì sao scheduler và trình quản lý bộ nhớ được cấu trúc như vậy |
 | *Linux Device Drivers* (bản 3, "LDD3") | Corbet, Rubini, Kroah-Hartman | Sprint 6 — tài liệu tham chiếu cấu trúc kinh điển cho việc thiết kế driver, **kèm lưu ý:** viết cho kernel 2.6.10; nhiều lời gọi API cụ thể mà sách mô tả đã thay đổi hoặc bị xoá. Dùng để hiểu khái niệm và cấu trúc, không copy API — đối chiếu bất kỳ thứ gì liên quan tới version với tài liệu kernel hiện hành (`Documentation/driver-api/` trong source kernel) hoặc Linux Kernel Labs. |
@@ -357,12 +359,21 @@ có MMU ở phần lớn dòng chip. Đọc trọn cuốn này trước Sprint 3
 ### 8.6 Chỉ Dành Cho Extension Track
 
 *Systems Performance* và *BPF Performance Tools* (Brendan Gregg) cho
-V4.0; *Computer Organization and Design: ARM Edition* (Patterson &
-Hennessy) như một hướng đào sâu tuỳ chọn về cache/virtual-memory/
-pipelining một khi phía SoC đã chạy (xem ghi chú ở mục 8.1); tài liệu
-OP-TEE và Trusted Firmware-A cho V5.0; *Practical Binary Analysis*
-(Andriesse) cho V5.0 nếu theo đuổi hướng bảo mật cụ thể; *C++
-Concurrency in Action* (Anthony Williams) khi phần đa luồng trở nên
+V4.0; tài liệu OP-TEE và Trusted Firmware-A cho V5.0.
+
+**Về *Computer Systems: A Programmer's Perspective* (CS:APP, Bryant &
+O'Hallaron):** không đề xuất đưa vào Core Track — phần lớn nội dung của
+nó (process control, signal, virtual memory ở góc nhìn API của OS)
+trùng lặp với OSTEP và TLPI đã được gắn chính xác vào Core Track, và
+kiến trúc ví dụ chính của sách là x86-64 chứ không phải ARM. Hai chương
+thật sự độc đáo, không cuốn nào khác trong roadmap này dạy: **linking/
+loading** (cách linker và loader hoạt động thật sự) và **buffer
+overflow/exploitation ở mức machine-code**. Cả hai đáng đọc riêng cho
+V5.0 (Security), làm nền trực tiếp trước *Practical Binary Analysis*
+(Andriesse) — chương exploitation dẫn thẳng tới kỹ năng phân tích binary
+mà cuốn đó yêu cầu.
+
+*C++ Concurrency in Action* (Anthony Williams) khi phần đa luồng trở nên
 phức tạp hơn.
 
 ---
@@ -676,10 +687,10 @@ Tuỳ chọn, chỉ chọn sau khi hoàn thành V3.5, dựa theo định hướn
 | Version | Trọng tâm | Vì sao nên chọn |
 |---|---|---|
 | V4.0 | Performance & Observability (*Systems Performance*, eBPF, `perf`) | Các vị trí thiên về platform/hạ tầng |
-| V5.0 | Secure Boot & TEE (OP-TEE, TF-A, `dm-verity`, `dm-crypt`, A/B rollback); tuỳ chọn thêm *Practical Binary Analysis* nếu theo đuổi chiều sâu bảo mật/reverse-engineering | Automotive, y tế, các vị trí nhạy cảm về bảo mật |
+| V5.0 | Secure Boot & TEE (OP-TEE, TF-A, `dm-verity`, `dm-crypt`, A/B rollback); tuỳ chọn thêm 2 chương linking/loading và exploitation của CS:APP cộng *Practical Binary Analysis* nếu theo đuổi chiều sâu bảo mật/reverse-engineering | Automotive, y tế, các vị trí nhạy cảm về bảo mật |
 | V6.0 | Port sang SoC công nghiệp trên nền NXP i.MX93 — RemoteProc, RPMsg, asymmetric multiprocessing, Time-Sensitive Networking, Real-Time Linux | Robotics hoặc tự động hoá công nghiệp |
 | V7.0 | REST API / WebUI / Cloud Dashboard | Các vị trí thiên về product |
-| V8.0 | ROS2 / suy luận AI on-device / đào sâu thêm kiến trúc máy tính (*Computer Organization and Design: ARM Edition*) | Chuyên sâu robotics hoặc edge-AI |
+| V8.0 | ROS2 / suy luận AI on-device / GUI | Chuyên sâu robotics hoặc edge-AI |
 
 ---
 
